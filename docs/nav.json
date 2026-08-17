@@ -1,0 +1,18 @@
+[
+  {
+    "title": "Getting started",
+    "pages": ["index", "install", "quickstart"]
+  },
+  {
+    "title": "Authoring",
+    "pages": ["writing", "layouts", "embeds", "diagrams", "theming"]
+  },
+  {
+    "title": "Presenting",
+    "pages": ["presenting"]
+  },
+  {
+    "title": "Projects and output",
+    "pages": ["projects", "cli", "deploying"]
+  }
+]

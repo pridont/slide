@@ -1,0 +1,74 @@
+name: Docs
+
+# The documentation site, plus the two demo decks it links to — both built by
+# the CLI this workflow just compiled, so the demos are always the current
+# tool's output rather than a screenshot of an older one.
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'docs/**'
+      - 'examples/**'
+      - 'scripts/build-docs.mjs'
+      - 'src/**'
+      - 'install.sh'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a queued one is only ever superseded.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # A project site is served from /<repo>/, so every URL the build writes
+      # has to carry that prefix. Deriving it means a fork deploys correctly
+      # with no edit.
+      - name: Work out the base path
+        run: echo "BASE=/${GITHUB_REPOSITORY#*/}/" >>"$GITHUB_ENV"
+
+      - run: pnpm build
+
+      # The project demo has mermaid diagrams, which are drawn at build time.
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Documentation
+        run: node scripts/build-docs.mjs --out docs-dist --base "$BASE"
+
+      - name: Demo deck
+        run: node dist/cli/index.js build examples/basic.md --out docs-dist/demo --base "${BASE}demo/"
+
+      - name: Demo project
+        run: node dist/cli/index.js build examples/project --out docs-dist/talks --base "${BASE}talks/"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-dist
+
+  deploy:
+    name: deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

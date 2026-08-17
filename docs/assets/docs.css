@@ -1,0 +1,585 @@
+/*
+ * The documentation site's own stylesheet. The palette and the syntax colours
+ * come from the deck theme's real files (tokens.css, highlight.css), so the
+ * site is coloured by the same tokens a deck is; everything here is the part a
+ * deck has no use for — a page you scroll, a sidebar, and prose measured in
+ * `rem` rather than `cqw`, because a screen is not a projector.
+ */
+
+/*
+ * tokens.css swaps to paper on `html.light`, which is how a deck asks for it.
+ * Documentation has no frontmatter to ask with, so it follows the reader's
+ * system setting instead, off the same raw palette.
+ */
+@media (prefers-color-scheme: light) {
+  :root {
+    --slide-color-bg: var(--slide-paper-bg);
+    --slide-color-panel: var(--slide-paper-panel);
+    --slide-color-fg: var(--slide-paper-fg);
+    --slide-color-muted: var(--slide-paper-muted);
+    --slide-color-backdrop: var(--slide-paper-backdrop);
+
+    --slide-rule: rgb(34 26 41 / 0.12);
+    --slide-rule-strong: rgb(34 26 41 / 0.16);
+
+    --slide-color-apricot: var(--slide-apricot-base);
+    --slide-color-lilac: var(--slide-lilac-base);
+    --slide-color-cyan: var(--slide-cyan-base);
+
+    --slide-syn-comment: #6c6274;
+    --slide-syn-keyword: #7b4fa0;
+    --slide-syn-function: #1f7d86;
+    --slide-syn-string: #4a6d2f;
+    --slide-syn-number: #a45f27;
+    --slide-syn-class: #7a5f12;
+    --slide-syn-builtin: #3a5a9c;
+    --slide-syn-property: #a1476a;
+    --slide-syn-punct: #665d6e;
+
+    color-scheme: light;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  background: var(--slide-color-bg);
+  color: var(--slide-color-fg);
+  font-family: var(--slide-font-body);
+  font-size: 1.0625rem;
+  line-height: var(--slide-lh-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: var(--slide-color-accent);
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 10;
+  padding: 0.5rem 0.9rem;
+  background: var(--slide-color-panel);
+  border-radius: var(--slide-radius-pill);
+}
+
+/* ---- Masthead ----------------------------------------------------------- */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem clamp(1rem, 4vw, 2.5rem);
+  background: color-mix(in oklab, var(--slide-color-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--slide-rule);
+}
+
+.masthead__name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: var(--slide-tracking-tight);
+  color: var(--slide-color-fg);
+  text-decoration: none;
+}
+
+.masthead__name::before {
+  content: '';
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.5rem;
+  border-radius: 2px;
+  background: var(--slide-color-accent);
+}
+
+.masthead__links {
+  display: flex;
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+  font-size: 0.95rem;
+}
+
+.masthead__links a {
+  color: var(--slide-color-muted);
+  text-decoration: none;
+}
+
+.masthead__links a:hover {
+  color: var(--slide-color-fg);
+}
+
+/* ---- Shell -------------------------------------------------------------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr) 13rem;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  max-width: 84rem;
+  margin: 0 auto;
+  padding: 2.5rem clamp(1rem, 4vw, 2.5rem) 4rem;
+}
+
+@media (max-width: 60rem) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 1.25rem;
+  }
+
+  .toc {
+    display: none;
+  }
+}
+
+/* ---- Sidebar ------------------------------------------------------------ */
+
+/*
+ * The same list twice — see build-docs.mjs. A wide screen gets the plain nav,
+ * a narrow one the <details>, and neither needs a line of script.
+ */
+.sidebar {
+  align-self: start;
+  position: sticky;
+  top: 5rem;
+  font-size: 0.95rem;
+}
+
+.sidebar--narrow {
+  display: none;
+}
+
+.sidebar__toggle {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-code);
+  color: var(--slide-color-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.sidebar__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar__toggle::after {
+  content: ' ▾';
+}
+
+.sidebar[open] .sidebar__toggle::after {
+  content: ' ▴';
+}
+
+@media (max-width: 60rem) {
+  .sidebar--wide {
+    display: none;
+  }
+
+  .sidebar--narrow {
+    display: block;
+    position: static;
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar__nav {
+    max-height: 50vh;
+    padding-top: 1rem;
+    overflow-y: auto;
+  }
+}
+
+.sidebar__section + .sidebar__section {
+  margin-top: 1.5rem;
+}
+
+.sidebar__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--slide-tracking-kicker);
+  color: var(--slide-color-muted);
+}
+
+.sidebar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar li a {
+  display: block;
+  padding: 0.28rem 0.6rem;
+  margin-left: -0.6rem;
+  border-radius: var(--slide-radius-code);
+  color: var(--slide-color-muted);
+  text-decoration: none;
+}
+
+.sidebar li a:hover {
+  color: var(--slide-color-fg);
+  background: var(--slide-color-panel);
+}
+
+.sidebar li a.active {
+  color: var(--slide-color-accent);
+  background: var(--slide-color-panel);
+}
+
+/* ---- Contents ----------------------------------------------------------- */
+
+.toc {
+  align-self: start;
+  position: sticky;
+  top: 5rem;
+  font-size: 0.9rem;
+}
+
+.toc__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--slide-tracking-kicker);
+  color: var(--slide-color-muted);
+}
+
+.toc ul {
+  margin: 0;
+  padding: 0 0 0 0.8rem;
+  list-style: none;
+  border-left: 1px solid var(--slide-rule);
+}
+
+.toc li a {
+  display: block;
+  padding: 0.2rem 0;
+  color: var(--slide-color-muted);
+  text-decoration: none;
+}
+
+.toc li a:hover {
+  color: var(--slide-color-fg);
+}
+
+/* ---- Prose -------------------------------------------------------------- */
+
+.prose {
+  max-width: 46rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--slide-tracking-kicker);
+  color: var(--slide-color-accent);
+}
+
+.prose h1 {
+  margin: 0.4rem 0 0.6rem;
+  font-family: var(--slide-font-heading);
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  line-height: var(--slide-lh-tight);
+  letter-spacing: var(--slide-tracking-tight);
+}
+
+.lede {
+  margin: 0 0 2.5rem;
+  font-size: 1.2rem;
+  color: var(--slide-color-muted);
+}
+
+.prose h2 {
+  margin: 3rem 0 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--slide-rule);
+  font-size: 1.5rem;
+  line-height: var(--slide-lh-heading);
+  letter-spacing: var(--slide-tracking-tight);
+}
+
+.prose h3 {
+  margin: 2.25rem 0 0.6rem;
+  font-size: 1.15rem;
+  line-height: var(--slide-lh-heading);
+}
+
+.prose h4 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.prose p,
+.prose ul,
+.prose ol {
+  margin: 0 0 1.1rem;
+}
+
+.prose li {
+  margin-bottom: 0.35rem;
+}
+
+.prose strong {
+  color: var(--slide-color-fg);
+}
+
+.anchor {
+  margin-left: 0.4rem;
+  color: var(--slide-color-muted);
+  text-decoration: none;
+  opacity: 0;
+  font-weight: 400;
+}
+
+h2:hover .anchor,
+h3:hover .anchor,
+.anchor:focus {
+  opacity: 1;
+}
+
+.prose blockquote {
+  margin: 1.5rem 0;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 3px solid var(--slide-color-accent);
+  color: var(--slide-color-muted);
+}
+
+.prose hr {
+  margin: 2.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--slide-rule);
+}
+
+.prose img {
+  max-width: 100%;
+  border-radius: var(--slide-radius-panel);
+}
+
+kbd {
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--slide-rule-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--slide-radius-code);
+  background: var(--slide-color-panel);
+  font-family: var(--slide-font-mono);
+  font-size: 0.85em;
+}
+
+/* ---- Code --------------------------------------------------------------- */
+
+code {
+  font-family: var(--slide-font-mono);
+  font-size: 0.875em;
+}
+
+:not(pre) > code {
+  padding: 0.12em 0.35em;
+  border-radius: var(--slide-radius-code);
+  background: var(--slide-color-panel);
+  color: var(--slide-color-fg);
+}
+
+.code {
+  position: relative;
+  margin: 0 0 1.4rem;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+  overflow: hidden;
+}
+
+.code__lang {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.25rem 0.6rem;
+  font-family: var(--slide-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: var(--slide-tracking-mono);
+  color: var(--slide-color-muted);
+  background: var(--slide-color-bg);
+  border-left: 1px solid var(--slide-rule);
+  border-bottom: 1px solid var(--slide-rule);
+  border-bottom-left-radius: var(--slide-radius-code);
+}
+
+.code pre {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+
+/* ---- Tables ------------------------------------------------------------- */
+
+.table {
+  margin: 0 0 1.6rem;
+  overflow-x: auto;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+}
+
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table th,
+.table td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--slide-rule);
+}
+
+.table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: var(--slide-tracking-kicker);
+  color: var(--slide-color-muted);
+  background: var(--slide-color-panel);
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---- Landing page bits -------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.cards li {
+  margin: 0;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+}
+
+.cards strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.cards p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--slide-color-muted);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 2.5rem;
+}
+
+.button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--slide-rule-strong);
+  border-radius: var(--slide-radius-pill);
+  color: var(--slide-color-fg);
+  text-decoration: none;
+}
+
+.button:hover {
+  background: var(--slide-color-panel);
+}
+
+.button--primary {
+  background: var(--slide-color-accent);
+  border-color: transparent;
+  color: var(--slide-color-accent-contrast);
+  font-weight: 600;
+}
+
+.button--primary:hover {
+  background: var(--slide-color-accent);
+  filter: brightness(1.08);
+}
+
+/* ---- Pager and footer --------------------------------------------------- */
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 46rem;
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--slide-rule);
+}
+
+.pager__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  text-decoration: none;
+  color: var(--slide-color-fg);
+}
+
+.pager__link:hover {
+  background: var(--slide-color-panel);
+}
+
+.pager__link span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--slide-tracking-kicker);
+  color: var(--slide-color-muted);
+}
+
+.pager__link--next {
+  text-align: right;
+}
+
+.footer {
+  padding: 2rem clamp(1rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--slide-rule);
+  font-size: 0.9rem;
+  color: var(--slide-color-muted);
+}
+
+.footer p {
+  max-width: 84rem;
+  margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

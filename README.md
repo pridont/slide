@@ -13,6 +13,27 @@ slide dev talk.md       # edit it, with live reload
 slide build talk.md     # write a static site to dist/
 ```
 
+**[Documentation](https://pridonte.github.io/slide/)** · [a built deck](https://pridonte.github.io/slide/demo/) · [a project of several](https://pridonte.github.io/slide/talks/)
+
+## Install
+
+```sh
+curl -fsSL https://pridonte.github.io/slide/install.sh | sh
+```
+
+It resolves the latest release, downloads the npm tarball attached to it, and
+installs that globally. npm on its own does the same thing:
+
+```sh
+npm install -g https://github.com/pridonte/slide/releases/latest/download/slide.tgz
+```
+
+Node 20 or newer. A deck kept in a repository is usually better off with the
+CLI pinned beside it — `npm install -D <the same URL>` — so it still builds in
+a year. [Installation](https://pridonte.github.io/slide/install/) has the rest:
+pinning a version, building from source, and the two optional packages a deck
+with diagrams needs.
+
 ## Writing a deck
 
 A deck is one markdown file. A line of exactly `---`, with a blank line above
@@ -401,9 +422,18 @@ pnpm check         # lint, typecheck, unit tests
 pnpm test:e2e      # Playwright, against a real build
 pnpm example:dev   # the example deck, in the dev server
 pnpm example:project
+pnpm docs:serve    # the documentation site, at localhost:4180
+pnpm docs:site     # the same, with both demo decks built into it
 ```
 
 `src/parse` splits and validates, `src/render` turns a slide into a page,
 `src/build` emits the site, `src/dev` serves the same renderer from memory,
 `src/runtime` is the browser code, and `src/client` holds the two standalone
 scripts that are handed to a browser as text rather than imported.
+
+`docs/` is the documentation site: markdown pages plus `nav.json`, built by
+`scripts/build-docs.mjs` — markdown-it and highlight.js, which the tool already
+depends on, and no framework. `.github/workflows/pages.yml` builds it along
+with both demo decks and deploys the lot to GitHub Pages;
+`.github/workflows/release.yml` turns a `v*` tag into a release with the npm
+tarball `install.sh` downloads.

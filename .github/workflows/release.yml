@@ -1,0 +1,75 @@
+name: Release
+
+# Push a tag, get a release with an npm tarball attached to it. That tarball is
+# what `install.sh` downloads and what `npm install -g <url>` installs, so this
+# workflow is the only thing standing between a tag and an installable CLI.
+#
+#   git tag v0.2.0 && git push origin v0.2.0
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and release, e.g. v0.2.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: pack and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # A broken release is worse than a late one.
+      - run: pnpm check
+
+      - name: Work out the version
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          echo "TAG=$TAG" >>"$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >>"$GITHUB_ENV"
+
+      - run: pnpm build
+
+      # The tag is the version. package.json is stamped here rather than
+      # committed, so a tag is the only thing a release needs.
+      - name: Pack
+        run: |
+          npm pkg set version="$VERSION"
+          npm pack --pack-destination artifacts
+          # A stable filename as well as the versioned one, so
+          # /releases/latest/download/slide.tgz is a URL that keeps working.
+          cp "artifacts/slide-${VERSION}.tgz" artifacts/slide.tgz
+          ls -l artifacts
+
+      # Installing the actual artifact is the only check that means anything.
+      - name: Smoke test
+        run: |
+          npm install -g "artifacts/slide-${VERSION}.tgz"
+          slide --version
+          slide init /tmp/smoke.md
+          slide build /tmp/smoke.md --out /tmp/smoke-dist
+          test -f /tmp/smoke-dist/index.html
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" artifacts/slide-*.tgz artifacts/slide.tgz --clobber
+          else
+            gh release create "$TAG" artifacts/slide-*.tgz artifacts/slide.tgz \
+              --title "$TAG" --generate-notes
+          fi

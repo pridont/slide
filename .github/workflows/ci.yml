@@ -26,6 +26,10 @@ jobs:
       # The example is the deck everything is verified against, so a build of
       # it failing is a failure worth hearing about on its own.
       - run: pnpm example:build
+      # The documentation site is built from docs/*.md by a script of its own,
+      # and it can break on a missing title or a link to a page that is gone.
+      # Cheaper to find out here than on a deploy.
+      - run: pnpm run docs
 
   e2e:
     name: end to end
