@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "A simple and minimal markdown-based web slideshow builder",
+  "packageManager": "pnpm@11.0.4",
   "license": "MIT",
   "bin": {
     "slide": "./dist/cli/index.js"

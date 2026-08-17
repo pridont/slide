@@ -55,6 +55,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -64,15 +65,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       # The base path is the repository name on a project site.
       - run: npx slide build talk.md --out dist --base "/${GITHUB_REPOSITORY#*/}/"
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -84,8 +85,13 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 ```
+
+Action majors matter here: anything older than `checkout@v5`, `setup-node@v5`,
+`upload-pages-artifact@v5` or `deploy-pages@v5` runs on the Node 20 runtime the
+runners are retiring, and `deploy-pages` needs `actions: read` to fetch the
+artifact it deploys.
 
 `npm ci` needs the CLI in the deck's `package.json` — see
 [installing it as a project dependency](./install.md#as-a-project-dependency).
