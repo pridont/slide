@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 260" width="880" height="260" role="img" aria-label="Markdown is parsed into slides, rendered to pages, and bundled into a static site">
+  <defs>
+    <style>
+      .card { fill: #2a2233; stroke: #4a3d58; stroke-width: 1.5; }
+      .label { font-family: "Hanken Grotesk", system-ui, sans-serif; font-size: 19px; font-weight: 600; fill: #ece6f1; }
+      .sub { font-family: "DM Mono", ui-monospace, monospace; font-size: 13px; fill: #a196aa; letter-spacing: 0.05em; }
+      .arrow { stroke: #e6a878; stroke-width: 2; fill: none; }
+      .dot { fill: #e6a878; }
+    </style>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e6a878" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="880" height="260" rx="14" fill="#1f1826" />
+
+  <rect class="card" x="28" y="74" width="176" height="112" rx="10" />
+  <text class="label" x="116" y="126" text-anchor="middle">deck.md</text>
+  <text class="sub" x="116" y="150" text-anchor="middle">markdown</text>
+
+  <path class="arrow" d="M 214 130 L 268 130" marker-end="url(#head)" />
+
+  <rect class="card" x="278" y="74" width="176" height="112" rx="10" />
+  <text class="label" x="366" y="118" text-anchor="middle">parse</text>
+  <text class="sub" x="366" y="142" text-anchor="middle">split · frontmatter</text>
+  <text class="sub" x="366" y="160" text-anchor="middle">notes</text>
+
+  <path class="arrow" d="M 464 130 L 518 130" marker-end="url(#head)" />
+
+  <rect class="card" x="528" y="74" width="176" height="112" rx="10" />
+  <text class="label" x="616" y="118" text-anchor="middle">render</text>
+  <text class="sub" x="616" y="142" text-anchor="middle">layout · assets</text>
+  <text class="sub" x="616" y="160" text-anchor="middle">highlight</text>
+
+  <path class="arrow" d="M 714 130 L 768 130" marker-end="url(#head)" />
+
+  <rect class="card" x="778" y="74" width="76" height="112" rx="10" />
+  <text class="label" x="816" y="122" text-anchor="middle">site</text>
+  <text class="sub" x="816" y="146" text-anchor="middle">html</text>
+
+  <circle class="dot" cx="116" cy="212" r="3" />
+  <text class="sub" x="132" y="217">one file in, one page per slide out</text>
+</svg>

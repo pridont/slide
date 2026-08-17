@@ -1,0 +1,11 @@
+dist
+examples/dist
+node_modules
+pnpm-lock.yaml
+
+# Prose and hand-laid-out files. Markdown here is content — the example decks
+# are also test fixtures, where a rewrapped line is a changed slide — and the
+# theme CSS is grouped and commented by hand.
+*.md
+*.css
+*.html

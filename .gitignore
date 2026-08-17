@@ -1,0 +1,13 @@
+node_modules/
+dist/
+examples/dist/
+examples/project-dist/
+.slide/
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+.DS_Store
+
+TODO.md

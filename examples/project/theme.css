@@ -1,0 +1,28 @@
+/*
+ * A project's own stylesheet, listed as `css:` in slide.config.ts. It loads
+ * after the theme, so it can lean on the same tokens and override anything.
+ *
+ * This is where a custom layout's classes are styled: a template is raw HTML,
+ * and a `style` attribute inside one would be blocked by a strict style-src.
+ */
+
+.card-layout {
+  align-items: center;
+  justify-content: center;
+}
+
+.card-layout__panel {
+  padding: 1.4em 1.6em;
+  border: 1px solid var(--slide-color-accent);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+  box-shadow: 0 0.4em 2em rgb(0 0 0 / 0.35);
+}
+
+.card-layout__panel > :first-child {
+  margin-top: 0;
+}
+
+.card-layout__panel > :last-child {
+  margin-bottom: 0;
+}

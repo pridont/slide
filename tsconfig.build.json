@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  // src/client holds browser scripts that ship as source and are compiled on
+  // demand by src/build/client-script.ts — tsc typechecks them, copy-assets
+  // mirrors them, and an emitted .js beside them would only be confusing.
+  "exclude": ["**/*.test.ts", "**/__fixtures__/**", "src/client/**"]
+}

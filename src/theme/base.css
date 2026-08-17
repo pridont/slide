@@ -1,0 +1,720 @@
+/*
+ * Base stylesheet. Structure and typography only — every value comes from a
+ * token, so a deck restyles without touching a rule here.
+ *
+ * The slide is a fixed-aspect size container scaled to the viewport, and
+ * everything in it is sized in `cqw` or `em`. A deck therefore looks identical
+ * at any screen size with no JS, and lays out correctly while prerendering.
+ */
+
+@import "./tokens.css";
+@import "./highlight.css";
+@import "./presenter.css";
+
+:root {
+  --slide-aspect: 16 / 9;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--slide-color-backdrop);
+  color: var(--slide-color-fg);
+  font-family: var(--slide-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.slide-viewport {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+}
+
+.slide {
+  position: relative;
+  container-type: size;
+  width: min(100vw, calc(100vh * (var(--slide-aspect))));
+  aspect-ratio: var(--slide-aspect);
+  overflow: hidden;
+  background: var(--slide-background, var(--slide-color-bg));
+}
+
+/*
+ * `background:` frontmatter pointing at an image. Set by generated CSS rather
+ * than a `style` attribute, so there is no attribute to key off; unset, the
+ * layer resolves to `none` and paints nothing.
+ */
+.slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--slide-background-image, none);
+  background-size: cover;
+  background-position: center;
+}
+
+.slide-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  padding: calc(var(--slide-padding) * 1cqw);
+  font-size: calc(var(--slide-font-size) * 1cqw);
+  line-height: var(--slide-lh-body);
+}
+
+.slide-content > :first-child {
+  margin-top: 0;
+}
+
+.slide-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Typography ------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0 0 0.5em;
+  font-family: var(--slide-font-heading);
+  font-weight: 650;
+  line-height: var(--slide-lh-heading);
+  letter-spacing: var(--slide-tracking-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--slide-fs-h1);
+  line-height: var(--slide-lh-tight);
+}
+
+h2 {
+  font-size: var(--slide-fs-h2);
+}
+
+h3 {
+  font-size: var(--slide-fs-h3);
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1em;
+  color: var(--slide-color-muted);
+  font-weight: 600;
+  letter-spacing: var(--slide-tracking-kicker);
+  text-transform: uppercase;
+}
+
+p,
+ul,
+ol,
+blockquote,
+pre,
+table {
+  margin: 0 0 var(--slide-gap);
+}
+
+ul,
+ol {
+  padding-left: 1.1em;
+}
+
+li {
+  margin-bottom: 0.3em;
+}
+
+li::marker {
+  color: var(--slide-color-accent);
+}
+
+a {
+  color: var(--slide-color-accent);
+  text-decoration-thickness: 0.05em;
+  text-underline-offset: 0.18em;
+}
+
+strong {
+  font-weight: 700;
+}
+
+em {
+  font-style: italic;
+}
+
+blockquote {
+  margin-left: 0;
+  padding-left: 0.9em;
+  border-left: 0.12em solid var(--slide-color-accent);
+  color: var(--slide-color-muted);
+  font-style: italic;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+code {
+  font-family: var(--slide-font-mono);
+  letter-spacing: var(--slide-tracking-mono);
+}
+
+:not(pre) > code {
+  padding: 0.12em 0.35em;
+  border-radius: var(--slide-radius-code);
+  background: var(--slide-color-panel);
+  font-size: 0.85em;
+}
+
+pre {
+  padding: 0.8em 1em;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+  overflow-x: auto;
+}
+
+pre code {
+  font-size: var(--slide-fs-mono);
+  line-height: 1.45;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+  border-radius: var(--slide-radius-panel);
+}
+
+iframe {
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+}
+
+figure {
+  margin: 0 0 var(--slide-gap);
+}
+
+figcaption {
+  margin-top: 0.4em;
+  color: var(--slide-color-muted);
+  font-size: var(--slide-fs-small);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--slide-fs-small);
+}
+
+th,
+td {
+  padding: 0.45em 0.7em;
+  border-bottom: 1px solid var(--slide-rule);
+  text-align: left;
+}
+
+th {
+  color: var(--slide-color-muted);
+  font-weight: 600;
+  letter-spacing: var(--slide-tracking-kicker);
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+
+hr {
+  height: 0;
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid var(--slide-rule-strong);
+}
+
+kbd {
+  padding: 0.15em 0.4em;
+  border: 1px solid var(--slide-rule-strong);
+  border-radius: var(--slide-radius-code);
+  background: var(--slide-color-panel);
+  font-family: var(--slide-font-mono);
+  font-size: 0.8em;
+}
+
+/* Embeds ------------------------------------------------------------------ */
+
+/*
+ * `::: iframe {…} :::`. Sizing is by class because a `style` attribute would
+ * be blocked by a strict style-src, and the deck stylesheet is generated
+ * before the pages that would describe each embed.
+ */
+.slide-embed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin: 0 0 var(--slide-gap);
+  min-height: 0;
+  /*
+   * An embed asked for a size gets it. Left shrinkable, an overfull slide
+   * would quietly squeeze the frame instead of overflowing, and the dev
+   * overflow check would have nothing to report — the same trap `pre` falls
+   * into with its automatic minimum size of zero.
+   */
+  flex: 0 0 auto;
+}
+
+/* The default: take whatever height the slide has left. */
+.slide-embed.embed-fill {
+  flex: 1 1 auto;
+}
+
+.slide-embed-frame {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+}
+
+.slide-embed.embed-fill .slide-embed-frame {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+/*
+ * `height=400` sets the HTML attribute, which the UA already maps to a height.
+ * Nothing here may set one, or the author rule would beat that hint — this is
+ * also why the attribute is used at all instead of a `style`.
+ */
+
+.slide-embed:not(.embed-fill) .slide-embed-frame {
+  flex: 0 0 auto;
+}
+
+.slide-embed.embed-16-9 .slide-embed-frame {
+  aspect-ratio: 16 / 9;
+}
+
+.slide-embed.embed-4-3 .slide-embed-frame {
+  aspect-ratio: 4 / 3;
+}
+
+.slide-embed.embed-3-2 .slide-embed-frame {
+  aspect-ratio: 3 / 2;
+}
+
+.slide-embed.embed-1-1 .slide-embed-frame {
+  aspect-ratio: 1 / 1;
+}
+
+.slide-embed figcaption {
+  color: var(--slide-color-muted);
+  font-size: var(--slide-fs-small);
+}
+
+/* Diagrams ---------------------------------------------------------------- */
+
+/*
+ * A ```mermaid fence, drawn to SVG at build time. Its colours are baked from
+ * the deck's tokens and its own stylesheet is generated alongside the deck's —
+ * see src/render/diagram.ts for why none of it can be an inline style.
+ */
+.slide-diagram {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 var(--slide-gap);
+  /*
+   * The same trap `pre` falls into: an item whose overflow is not visible has
+   * an automatic minimum size, and without this the diagram would silently
+   * shrink to fit rather than overflowing where the dev check can see it.
+   */
+  min-height: 0;
+}
+
+.slide-diagram svg {
+  /*
+   * The natural width arrives as a generated `max-width` in `em`, so a diagram
+   * rides the deck's type scale like everything else. Height follows the
+   * viewBox.
+   */
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+/* View transitions -------------------------------------------------------- */
+
+/*
+ * Opts every page into cross-document transitions — both documents must carry
+ * it, and one shared stylesheet is how. Without support, plain navigation.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes slide-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes slide-leave-forward {
+  to {
+    opacity: 0;
+    transform: translateX(-3%);
+  }
+}
+
+@keyframes slide-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-3%);
+  }
+}
+
+@keyframes slide-leave-back {
+  to {
+    opacity: 0;
+    transform: translateX(3%);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--slide-transition-duration);
+  animation-timing-function: var(--slide-transition-easing);
+  animation-fill-mode: both;
+}
+
+::view-transition-old(root) {
+  animation-name: slide-leave-forward;
+}
+
+::view-transition-new(root) {
+  animation-name: slide-enter-forward;
+}
+
+html[data-nav="back"]::view-transition-old(root) {
+  animation-name: slide-leave-back;
+}
+
+html[data-nav="back"]::view-transition-new(root) {
+  animation-name: slide-enter-back;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-name: none;
+    animation-duration: 1ms;
+  }
+}
+
+/* Project index ----------------------------------------------------------- */
+
+/* A web page, not a slide: sized in rem, but on the same tokens. */
+
+.index-body {
+  background: var(--slide-color-bg);
+}
+
+.deck-index {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 8vw, 6rem) clamp(1.25rem, 5vw, 2.5rem);
+}
+
+.deck-index__header {
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.deck-index__header h1 {
+  margin: 0 0 0.35em;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  line-height: var(--slide-lh-tight);
+  letter-spacing: var(--slide-tracking-tight);
+}
+
+.deck-index__header p {
+  margin: 0;
+  max-width: 34em;
+  color: var(--slide-color-muted);
+  font-size: 1.05rem;
+  line-height: var(--slide-lh-body);
+}
+
+.deck-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-card {
+  position: relative;
+  border: 1px solid var(--slide-rule);
+  border-radius: var(--slide-radius-panel);
+  background: var(--slide-color-panel);
+  overflow: hidden;
+  transition:
+    border-color var(--slide-transition-duration) var(--slide-transition-easing),
+    transform var(--slide-transition-duration) var(--slide-transition-easing);
+}
+
+/* The deck's own cover image, dimmed enough to keep the title legible. */
+.deck-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--deck-cover, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.22;
+}
+
+.deck-card:hover {
+  border-color: var(--slide-color-accent);
+  transform: translateY(-1px);
+}
+
+.deck-card a {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  padding: 1.1rem 1.3rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.deck-card__title {
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: var(--slide-tracking-tight);
+}
+
+.deck-card__note {
+  color: var(--slide-color-muted);
+  line-height: 1.5;
+}
+
+.deck-card__count {
+  color: var(--slide-color-accent);
+  font-family: var(--slide-font-mono);
+  font-size: var(--slide-fs-small);
+  letter-spacing: var(--slide-tracking-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-card {
+    transition: none;
+  }
+
+  .deck-card:hover {
+    transform: none;
+  }
+}
+
+/* Layouts ---------------------------------------------------------------- */
+
+.layout-cover .slide-content {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.layout-cover h1 {
+  font-size: var(--slide-fs-display);
+  margin-bottom: 0.3em;
+}
+
+.layout-cover h2 {
+  font-weight: 400;
+  color: var(--slide-color-muted);
+}
+
+.layout-cover p {
+  color: var(--slide-color-muted);
+  font-size: 1.05em;
+  max-width: 24em;
+}
+
+.layout-cover hr {
+  width: 4em;
+  border-top: 0.08em solid var(--slide-color-accent);
+  margin: 0.8em 0;
+}
+
+/* One thing on the slide, in the middle of it. */
+.layout-center .slide-content {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/*
+ * A divider. Bigger than a heading on a normal slide, because it is read as a
+ * punctuation mark rather than as content.
+ */
+.layout-section .slide-content {
+  justify-content: center;
+}
+
+.layout-section h1,
+.layout-section h2 {
+  font-size: var(--slide-fs-display);
+  max-width: 14em;
+}
+
+.layout-section h2 {
+  font-weight: 650;
+}
+
+.layout-section .slide-content > :first-child::after {
+  display: block;
+  width: 3em;
+  margin-top: 0.35em;
+  border-top: 0.06em solid var(--slide-color-accent);
+  content: "";
+}
+
+/* A pull quote: the blockquote is the slide, so it loses its own decoration. */
+.layout-quote .slide-content {
+  justify-content: center;
+}
+
+.layout-quote blockquote {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--slide-color-fg);
+  font-size: var(--slide-fs-h2);
+  line-height: var(--slide-lh-heading);
+  text-wrap: balance;
+}
+
+/*
+ * On the paragraph, not the blockquote: a blockquote's children are blocks, so
+ * a pseudo-element on it becomes a line of its own instead of sitting against
+ * the words.
+ */
+.layout-quote blockquote > p:first-of-type::before {
+  color: var(--slide-color-accent);
+  content: "\201C";
+}
+
+.layout-quote blockquote > p:last-of-type::after {
+  color: var(--slide-color-accent);
+  content: "\201D";
+}
+
+/* Whatever follows the quote is the attribution. */
+.layout-quote blockquote + * {
+  margin-top: 0.9em;
+  color: var(--slide-color-muted);
+  font-size: var(--slide-fs-small);
+}
+
+.layout-quote blockquote + *::before {
+  content: "— ";
+}
+
+/* Two columns, and the two image layouts, which are two columns with a
+ * picture in one of them. */
+.slide-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--slide-padding) * 0.7cqw);
+  align-items: center;
+}
+
+.slide-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.slide-col > :first-child {
+  margin-top: 0;
+}
+
+.slide-col > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * The picture bleeds to the edges of the slide: the padding is on the text
+ * side only, which is what makes it read as a photograph rather than an
+ * illustration dropped into a paragraph.
+ */
+.layout-image-right .slide-content,
+.layout-image-left .slide-content {
+  padding: 0;
+  gap: 0;
+}
+
+.layout-image-right .slide-col {
+  padding: calc(var(--slide-padding) * 1cqw);
+}
+
+.layout-image-left .slide-col {
+  padding: calc(var(--slide-padding) * 1cqw);
+}
+
+.slide-figure {
+  height: 100%;
+  min-width: 0;
+}
+
+.slide-figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * A background image with words on it. The scrim is what keeps the words
+ * readable over a photograph nobody chose for its contrast.
+ */
+.layout-full-image .slide-content {
+  justify-content: flex-end;
+}
+
+.layout-full-image .slide-content::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(to top, var(--slide-color-backdrop) 5%, transparent 60%);
+  content: "";
+}
+
+.layout-full-image h1,
+.layout-full-image h2 {
+  max-width: 16em;
+  text-shadow: 0 0.04em 0.3em rgb(0 0 0 / 0.45);
+}
+
+.layout-full-image p {
+  max-width: 30em;
+  color: var(--slide-color-fg);
+  text-shadow: 0 0.04em 0.3em rgb(0 0 0 / 0.45);
+}

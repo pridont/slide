@@ -1,0 +1,152 @@
+/*
+ * Default design tokens — "aubergine dusk". A violet-tinted ink/paper palette,
+ * one warm sans, one mono, and an accent trio of apricot / lilac / cyan. Ink is
+ * the default; `colorScheme: light` puts `.light` on <html> and swaps to paper.
+ *
+ * Every token an author might want to change lives here, and `theme:` in deck
+ * frontmatter overrides any of them. The rest of the CSS only reads them.
+ */
+
+:root {
+  /* ---- Raw palette ------------------------------------------------------ */
+  /* Ink — dark */
+  --slide-ink-bg: #17131c;
+  --slide-ink-panel: #1f1826;
+  --slide-ink-fg: #ece6f1;
+  --slide-ink-muted: #a196aa;
+  --slide-ink-backdrop: #0d0a10;
+
+  /* Paper — light */
+  --slide-paper-bg: #f1ecf1;
+  --slide-paper-panel: #faf6fa;
+  --slide-paper-fg: #221a29;
+  --slide-paper-muted: #6c6274;
+  --slide-paper-backdrop: #ddd5dd;
+
+  /* Accent trio, as-is on paper */
+  --slide-apricot-base: #a45f27;
+  --slide-lilac-base: #7b4fa0;
+  --slide-cyan-base: #1f7d86;
+
+  /* Accent trio, lightened for legibility on ink */
+  --slide-apricot-lift: #e6a878;
+  --slide-lilac-lift: #c39fe0;
+  --slide-cyan-lift: #79c6cf;
+
+  /* ---- Semantic colour (ink is the default) ----------------------------- */
+  --slide-color-bg: var(--slide-ink-bg);
+  --slide-color-panel: var(--slide-ink-panel);
+  --slide-color-fg: var(--slide-ink-fg);
+  --slide-color-muted: var(--slide-ink-muted);
+  --slide-color-backdrop: var(--slide-ink-backdrop);
+
+  --slide-rule: rgb(236 230 241 / 0.1);
+  --slide-rule-strong: rgb(236 230 241 / 0.16);
+
+  --slide-color-apricot: var(--slide-apricot-lift);
+  --slide-color-lilac: var(--slide-lilac-lift);
+  --slide-color-cyan: var(--slide-cyan-lift);
+
+  --slide-color-accent: var(--slide-color-apricot);
+  --slide-color-accent-contrast: var(--slide-ink-bg);
+
+  /* ---- Syntax highlighting ---------------------------------------------- */
+  /* Tuned for WCAG AA (>=4.5:1) against --slide-color-panel. */
+  --slide-syn-comment: #8c7f96;
+  --slide-syn-keyword: #c39fe0;
+  --slide-syn-function: #79c6cf;
+  --slide-syn-string: #b7cf98;
+  --slide-syn-number: #e6a878;
+  --slide-syn-class: #e0c06f;
+  --slide-syn-builtin: #8fb4e6;
+  --slide-syn-property: #e69bb0;
+  --slide-syn-punct: #a196aa;
+
+  /* ---- Typography ------------------------------------------------------- */
+  /*
+   * System faces, so a deck costs no font requests at all. A deck that wants
+   * its own supplies the files with `fonts:` and points these at them.
+   */
+  --slide-font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --slide-font-heading: var(--slide-font-body);
+  --slide-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /*
+   * Base type size, in percent of slide width; every other size is an `em`
+   * multiple, so the scale rides the slide's size container. The ratios are a
+   * 19px reading scale opened up — slides are read from across a room.
+   */
+  --slide-font-size: 2.25;
+
+  --slide-fs-display: 2.75em;
+  --slide-fs-h1: 2.1em;
+  --slide-fs-h2: 1.47em;
+  --slide-fs-h3: 1.1em;
+  --slide-fs-small: 0.79em;
+  --slide-fs-mono: 0.66em;
+
+  --slide-lh-tight: 1.05;
+  --slide-lh-heading: 1.15;
+  --slide-lh-body: 1.6;
+
+  --slide-tracking-tight: -0.02em;
+  --slide-tracking-mono: 0.05em;
+  --slide-tracking-kicker: 0.14em;
+
+  /* ---- Space and shape --------------------------------------------------- */
+  /* In `em` so they scale with the slide rather than pinning to device pixels. */
+  --slide-padding: 6; /* percent of slide width */
+  --slide-gap: 0.7em;
+
+  --slide-radius-panel: 0.34em;
+  --slide-radius-code: 0.28em;
+  --slide-radius-pill: 999px;
+
+  --slide-transition-duration: 260ms;
+  --slide-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+  color-scheme: dark;
+}
+
+:root.light {
+  --slide-color-bg: var(--slide-paper-bg);
+  --slide-color-panel: var(--slide-paper-panel);
+  --slide-color-fg: var(--slide-paper-fg);
+  --slide-color-muted: var(--slide-paper-muted);
+  --slide-color-backdrop: var(--slide-paper-backdrop);
+
+  --slide-rule: rgb(34 26 41 / 0.12);
+  --slide-rule-strong: rgb(34 26 41 / 0.16);
+
+  --slide-color-apricot: var(--slide-apricot-base);
+  --slide-color-lilac: var(--slide-lilac-base);
+  --slide-color-cyan: var(--slide-cyan-base);
+
+  --slide-color-accent-contrast: var(--slide-paper-bg);
+
+  /* Darkened for AA contrast on paper. */
+  --slide-syn-comment: #6c6274;
+  --slide-syn-keyword: #7b4fa0;
+  --slide-syn-function: #1f7d86;
+  --slide-syn-string: #4a6d2f;
+  --slide-syn-number: #a45f27;
+  --slide-syn-class: #7a5f12;
+  --slide-syn-builtin: #3a5a9c;
+  --slide-syn-property: #a1476a;
+  --slide-syn-punct: #665d6e;
+
+  color-scheme: light;
+}
+
+/* Per slide via `class: theme-lilac`: the token inherits from that <main>. */
+.theme-apricot {
+  --slide-color-accent: var(--slide-color-apricot);
+}
+
+.theme-lilac {
+  --slide-color-accent: var(--slide-color-lilac);
+}
+
+.theme-cyan {
+  --slide-color-accent: var(--slide-color-cyan);
+}

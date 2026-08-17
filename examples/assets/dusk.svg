@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-label="Aubergine gradient with soft light">
+  <defs>
+    <radialGradient id="glow" cx="72%" cy="24%" r="72%">
+      <stop offset="0%" stop-color="#5c3a6b" />
+      <stop offset="46%" stop-color="#2b2033" />
+      <stop offset="100%" stop-color="#14101a" />
+    </radialGradient>
+    <radialGradient id="warm" cx="18%" cy="88%" r="52%">
+      <stop offset="0%" stop-color="#a45f27" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#a45f27" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#glow)" />
+  <rect width="1600" height="900" fill="url(#warm)" />
+</svg>

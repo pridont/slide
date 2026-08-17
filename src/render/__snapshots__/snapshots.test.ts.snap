@@ -1,0 +1,158 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`what each layout makes of the same slide > center 1`] = `
+"<main class="slide layout-center" data-slide="1">
+<div class="slide-content"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > cover 1`] = `
+"<main class="slide layout-cover" data-slide="1">
+<div class="slide-content"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > default 1`] = `
+"<main class="slide layout-default" data-slide="1">
+<div class="slide-content"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > full-image 1`] = `
+"<main class="slide layout-full-image" data-slide="1">
+<div class="slide-content"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > image-left 1`] = `
+"<main class="slide layout-image-left" data-slide="1">
+<div class="slide-content slide-cols"><div class="slide-figure"><img src="/assets/photo.png" alt="A photo"></div>
+<div class="slide-col"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div></div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > image-right 1`] = `
+"<main class="slide layout-image-right" data-slide="1">
+<div class="slide-content slide-cols"><div class="slide-col"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+<div class="slide-figure"><img src="/assets/photo.png" alt="A photo"></div></div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > quote 1`] = `
+"<main class="slide layout-quote" data-slide="1">
+<div class="slide-content"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > section 1`] = `
+"<main class="slide layout-section" data-slide="1">
+<div class="slide-content"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+</main>"
+`;
+
+exports[`what each layout makes of the same slide > two-cols 1`] = `
+"<main class="slide layout-two-cols" data-slide="1">
+<div class="slide-content slide-cols"><div class="slide-col"><h4>Kicker</h4>
+<h2>A heading</h2>
+<p>Some prose with <code>code</code> and a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a>.</p>
+<ul>
+<li>first</li>
+<li>second</li>
+</ul>
+<blockquote>
+<p>Something said</p>
+</blockquote>
+<p>Attribution</p>
+</div>
+<div class="slide-col"><p>Content for a second column.</p>
+</div></div>
+</main>"
+`;

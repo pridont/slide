@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Easing comparison</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --fg: #ece6f1;
+        --muted: #a196aa;
+        --panel: #241d2c;
+        --apricot: #e6a878;
+        --lilac: #c39fe0;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 18px 20px;
+        background: transparent;
+        color: var(--fg);
+        font: 15px/1.4 "Hanken Grotesk", system-ui, sans-serif;
+      }
+      .row { display: grid; grid-template-columns: 108px 1fr; align-items: center; gap: 14px; margin-bottom: 14px; }
+      .name { color: var(--muted); font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: 0.05em; }
+      .track { position: relative; height: 26px; border-radius: 999px; background: var(--panel); }
+      .ball { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; }
+      .ball.a { background: var(--apricot); }
+      .ball.b { background: var(--lilac); }
+      button {
+        margin-top: 4px; padding: 7px 14px; border: 0; border-radius: 999px;
+        background: var(--apricot); color: #17131c; font: 600 13px "Hanken Grotesk", system-ui, sans-serif; cursor: pointer;
+      }
+      @keyframes run { to { transform: translateX(var(--distance)); } }
+    </style>
+  </head>
+  <body>
+    <div class="row"><span class="name">linear</span><div class="track"><div class="ball a" id="one"></div></div></div>
+    <div class="row"><span class="name">ease-out</span><div class="track"><div class="ball b" id="two"></div></div></div>
+    <button id="play">play</button>
+
+    <script>
+      const balls = [
+        { node: document.getElementById('one'), easing: 'linear' },
+        { node: document.getElementById('two'), easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+      ]
+
+      function play() {
+        for (const { node, easing } of balls) {
+          const distance = node.parentElement.clientWidth - node.clientWidth - 6
+          node.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${distance}px)` }], {
+            duration: 1100,
+            easing,
+            fill: 'forwards',
+          })
+        }
+      }
+
+      document.getElementById('play').addEventListener('click', play)
+      play()
+    </script>
+  </body>
+</html>

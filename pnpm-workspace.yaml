@@ -1,0 +1,11 @@
+# pnpm 11 fails the install outright if a dependency's build script is neither
+# allowed nor denied, so esbuild (a transitive dependency of Vite) has to be
+# named here one way or the other.
+#
+# Denied: esbuild's postinstall validates the binary and rewrites its bin shim,
+# which pnpm installs do not need — the platform package (@esbuild/darwin-arm64
+# and friends) ships the binary and esbuild resolves it at runtime. Verified by
+# a clean install with this set to false: tests pass and the example builds,
+# minification included, which is esbuild doing real work.
+allowBuilds:
+  esbuild: false

@@ -1,0 +1,11 @@
+{
+  // The end-to-end suite sits outside `src`, which the build's rootDir owns.
+  // Its own program keeps `pnpm typecheck` honest about it all the same.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}

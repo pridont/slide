@@ -1,0 +1,63 @@
+{
+  "name": "slide",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A simple and minimal markdown-based web slideshow builder",
+  "license": "MIT",
+  "bin": {
+    "slide": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
+    "watch": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.e2e.json",
+    "lint": "oxlint --deny-warnings && prettier --check .",
+    "format": "oxlint --fix && prettier --write .",
+    "test": "vitest run",
+    "test:e2e": "pnpm build && playwright test",
+    "e2e:serve": "node dist/cli/index.js build examples/basic.md --out examples/dist --serve --port 4178",
+    "test:watch": "vitest",
+    "example": "pnpm build && node dist/cli/index.js build examples/basic.md --out examples/dist --serve --open",
+    "example:dev": "pnpm build && node dist/cli/index.js dev examples/basic.md --open",
+    "example:project": "pnpm build && node dist/cli/index.js dev examples/project --open",
+    "example:project:build": "pnpm build && node dist/cli/index.js build examples/project --out examples/project-dist",
+    "example:build": "pnpm build && node dist/cli/index.js build examples/basic.md --out examples/dist",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "highlight.js": "^11.12.0",
+    "markdown-it": "^14.1.0",
+    "vite": "^7.1.5",
+    "yaml": "^2.8.1"
+  },
+  "peerDependencies": {
+    "mermaid": "^11.0.0",
+    "playwright": "^1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "mermaid": {
+      "optional": true
+    },
+    "playwright": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.15.3",
+    "mermaid": "^11.16.1",
+    "oxlint": "^1.78.0",
+    "playwright": "^1.62.1",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
