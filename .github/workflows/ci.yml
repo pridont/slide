@@ -12,14 +12,12 @@ concurrency:
 
 jobs:
   check:
-    # `engines` says Node 20 or newer, so both ends of that get tested: 20 is
-    # the promise, 24 is what anyone installing today will actually run.
-    name: lint, typecheck, tests (node ${{ matrix.node }})
+    # One version, not a matrix over what `engines` allows: pnpm 11 needs Node
+    # 22.13 or newer, so a job on Node 20 cannot get as far as installing. The
+    # floor in `engines` is what the published CLI needs, which npm installs
+    # without pnpm anywhere near it; nothing in CI verifies it.
+    name: lint, typecheck, tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [20, 24]
     steps:
       - uses: actions/checkout@v7
       # The pnpm version comes from `packageManager` in package.json — with no
@@ -27,7 +25,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
