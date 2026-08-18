@@ -75,7 +75,10 @@ jobs:
       # Installing the actual artifact is the only check that means anything.
       - name: Smoke test
         run: |
-          npm install -g "artifacts/slide-${VERSION}.tgz"
+          # The ./ is load-bearing: npm reads a bare `a/b` argument as the
+          # GitHub shorthand for a repository, and goes looking for
+          # github.com/artifacts/slide-x.y.z.tgz over ssh.
+          npm install -g "./artifacts/slide-${VERSION}.tgz"
           slide --version
           slide init /tmp/smoke.md
           slide build /tmp/smoke.md --out /tmp/smoke-dist
