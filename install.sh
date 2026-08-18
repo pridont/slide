@@ -4,10 +4,16 @@
 #
 #   curl -fsSL https://pridont.github.io/slide/install.sh | sh
 #
-# It resolves a release (the latest, unless SLIDE_VERSION says otherwise),
-# downloads the npm tarball attached to it, and installs it globally with npm.
-# npm is what resolves the runtime dependencies, so there is no vendored
-# node_modules to go stale and nothing platform-specific to pick.
+# It downloads the npm tarball attached to a release (the latest, unless
+# SLIDE_VERSION says otherwise) and installs it globally with npm. npm is what
+# resolves the runtime dependencies, so there is no vendored node_modules to go
+# stale and nothing platform-specific to pick.
+#
+# Nothing here touches api.github.com. The API allows 60 unauthenticated calls
+# an hour *per IP address*, which is a shared office or a VPN exit answering
+# 403 to everyone behind it. github.com/<repo>/releases/... is a plain redirect
+# to the asset with no such limit, and the release workflow attaches a stable
+# `slide.tgz` filename so the latest one has a URL that can be written down.
 #
 # Everything lives in functions and runs from main() at the bottom, so a
 # truncated download cannot execute half an installer.
@@ -16,7 +22,8 @@ set -eu
 
 REPO="${SLIDE_REPO:-pridont/slide}"
 VERSION="${SLIDE_VERSION:-latest}"
-API="https://api.github.com/repos/${REPO}/releases"
+RELEASES="https://github.com/${REPO}/releases"
+ASSET="slide.tgz"
 DOCS="https://pridont.github.io/slide/"
 NODE_MINIMUM=20
 
@@ -45,7 +52,7 @@ slide installer
 Environment:
   SLIDE_VERSION   a release tag, e.g. v0.2.0 (default: the latest release)
   SLIDE_REPO      owner/name to install from (default: pridont/slide)
-  GITHUB_TOKEN    used for the API call, against rate limits or a private repo
+  GITHUB_TOKEN    sent with the download, for a private repository
 EOF
 }
 
@@ -91,39 +98,57 @@ check_node() {
 
 # ---- The release ------------------------------------------------------------
 
-# Prints "<tag> <tarball url>".
-resolve_release() {
+# The URL the tarball is downloaded from. Both forms are redirects github.com
+# serves without authentication and without a rate limit.
+asset_url() {
   if [ "$VERSION" = "latest" ]; then
-    url="${API}/latest"
+    printf '%s/latest/download/%s\n' "$RELEASES" "$ASSET"
   else
-    url="${API}/tags/${VERSION}"
+    printf '%s/download/%s/%s\n' "$RELEASES" "$VERSION" "$ASSET"
   fi
+}
 
-  # A repository with no releases answers 404, exactly as an unknown tag does,
-  # so which of the two it was has to come from what was asked for.
-  if ! release=$(fetch "$url"); then
-    if [ "$VERSION" = "latest" ]; then
-      die "${REPO} has no published release yet — or the GitHub API is unreachable.
+# Whether a URL answers at all. Used only to say which of two things went
+# wrong, so a failure here is just a less specific message.
+exists() { fetch "$1" >/dev/null 2>&1; }
+
+# Called when the download failed. A missing release and a release with no
+# tarball attached are the same 404 to the downloader, so the release page
+# itself is what tells them apart.
+explain_failure() {
+  if [ "$VERSION" = "latest" ]; then
+    if exists "${RELEASES}/latest"; then
+      die "the latest release of ${REPO} has no ${ASSET} attached to it.
+
+Every release is built by the repository's own workflow, which attaches one.
+A release made by hand will not have it. Pick another:
+
+  ${RELEASES}"
+    fi
+    die "${REPO} has no published release yet — or github.com is unreachable.
 
 Install from source instead:
 
   git clone https://github.com/${REPO}.git
   cd slide && npm install && npm run build && npm install -g ."
-    fi
-    die "${REPO} has no release tagged ${VERSION}."
   fi
 
-  tag=$(printf '%s\n' "$release" | grep -o '"tag_name": *"[^"]*"' | head -n 1 | cut -d'"' -f4)
-  asset=$(printf '%s\n' "$release" |
-    grep -o '"browser_download_url": *"[^"]*\.tgz"' | head -n 1 | cut -d'"' -f4)
-
-  [ -n "$tag" ] || die "the GitHub API returned no release for ${REPO}."
-  [ -n "$asset" ] || die "release ${tag} has no .tgz asset attached to it.
+  if exists "${RELEASES}/tag/${VERSION}"; then
+    die "release ${VERSION} of ${REPO} has no ${ASSET} attached to it.
 
 Every release is built by the repository's own workflow, which attaches one.
 A release made by hand will not have it."
+  fi
+  die "${REPO} has no release tagged ${VERSION} — see ${RELEASES}"
+}
 
-  printf '%s %s\n' "$tag" "$asset"
+# The version that was actually installed, read out of the tarball rather than
+# from the tag, so it is the number npm is about to register. Prints nothing if
+# the tarball cannot be read, which is npm's problem to report, not this one.
+package_version() {
+  command -v tar >/dev/null 2>&1 || return 0
+  tar -xzOf "$1" package/package.json 2>/dev/null |
+    grep -o '"version": *"[^"]*"' | head -n 1 | cut -d'"' -f4
 }
 
 # ---- Installing -------------------------------------------------------------
@@ -187,16 +212,20 @@ main() {
   printf '\nslide\n\n'
   log "node    $(node -v)"
 
-  resolved=$(resolve_release)
-  tag=${resolved% *}
-  asset=${resolved#* }
-  log "release $tag"
-
   WORK=$(mktemp -d 2>/dev/null || mktemp -d -t slide)
-  package="${WORK}/slide.tgz"
+  package="${WORK}/${ASSET}"
+  url=$(asset_url)
 
-  download "$asset" "$package" || die "could not download ${asset}"
-  log "package $(basename "$asset")"
+  download "$url" "$package" || explain_failure
+
+  # With no API call there is no tag to report before the download; the
+  # tarball's own version is the more useful number anyway.
+  version=$(package_version "$package")
+  if [ -n "$version" ]; then
+    log "release v${version}"
+  else
+    log "release ${VERSION}"
+  fi
 
   install_package "$package"
   verify
