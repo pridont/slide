@@ -13,24 +13,24 @@ slide dev talk.md       # edit it, with live reload
 slide build talk.md     # write a static site to dist/
 ```
 
-**[Documentation](https://pridonte.github.io/slide/)** · [a built deck](https://pridonte.github.io/slide/demo/) · [a project of several](https://pridonte.github.io/slide/talks/)
+**[Documentation](https://pridont.github.io/slide/)** · [a built deck](https://pridont.github.io/slide/demo/) · [a project of several](https://pridont.github.io/slide/talks/)
 
 ## Install
 
 ```sh
-curl -fsSL https://pridonte.github.io/slide/install.sh | sh
+curl -fsSL https://pridont.github.io/slide/install.sh | sh
 ```
 
 It resolves the latest release, downloads the npm tarball attached to it, and
 installs that globally. npm on its own does the same thing:
 
 ```sh
-npm install -g https://github.com/pridonte/slide/releases/latest/download/slide.tgz
+npm install -g https://github.com/pridont/slide/releases/latest/download/slide.tgz
 ```
 
 Node 20 or newer. A deck kept in a repository is usually better off with the
 CLI pinned beside it — `npm install -D <the same URL>` — so it still builds in
-a year. [Installation](https://pridonte.github.io/slide/install/) has the rest:
+a year. [Installation](https://pridont.github.io/slide/install/) has the rest:
 pinning a version, building from source, and the two optional packages a deck
 with diagrams needs.
 
@@ -434,6 +434,34 @@ scripts that are handed to a browser as text rather than imported.
 `docs/` is the documentation site: markdown pages plus `nav.json`, built by
 `scripts/build-docs.mjs` — markdown-it and highlight.js, which the tool already
 depends on, and no framework. `.github/workflows/pages.yml` builds it along
-with both demo decks and deploys the lot to GitHub Pages;
-`.github/workflows/release.yml` turns a `v*` tag into a release with the npm
-tarball `install.sh` downloads.
+with both demo decks and deploys the lot to GitHub Pages.
+
+## Commits and releases
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org):
+
+```
+feat(cli): add a --base flag
+fix: keep the presenter clock running across a slide change
+docs: explain the layout front matter
+```
+
+`feat` and `fix` are the two that show up in the changelog and move the version
+— `feat` the minor, `fix` the patch, and a `!` after the type (`feat!:`) the
+minor as well while the version is below 1.0. The rest (`docs`, `refactor`,
+`test`, `chore`, `ci`, `build`, `style`, `perf`, `revert`) are release notes at
+most. `commitlint.config.js` holds the rules; `.githooks/commit-msg` checks
+them before a commit is written, and CI checks every commit on a pull request
+plus its title, since a squash merge lands the title. `pnpm install` is what
+points git at `.githooks/`; `pnpm run prepare` does it on its own.
+
+Releasing is merging a pull request. `.github/workflows/release-please.yml`
+keeps a **chore(main): release x.y.z** pull request open, holding the version
+bump and the `CHANGELOG.md` entries for everything merged since the last
+release. Merging it tags the commit, creates the GitHub release with those
+notes, and calls `.github/workflows/release.yml`, which builds and attaches the
+npm tarball `install.sh` downloads. Nothing is published to npm.
+
+A tag pushed by hand (`git tag v0.2.0 && git push origin v0.2.0`) still runs
+the second half on its own, which is the way back in if a release needs
+re-cutting.

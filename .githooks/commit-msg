@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Runs commitlint over the message about to be committed. Installed by
+# scripts/setup-hooks.mjs, which points core.hooksPath at this directory.
+#
+# A clone with no install yet has no commitlint to run, and refusing to commit
+# because of that would be worse than the unchecked message — CI checks the
+# same rules on the pull request, so nothing gets through unverified either way.
+set -eu
+
+if [ ! -x node_modules/.bin/commitlint ]; then
+  exit 0
+fi
+
+exec node_modules/.bin/commitlint --edit "$1"
