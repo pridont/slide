@@ -63,6 +63,9 @@ jobs:
       - name: Pack
         run: |
           npm pkg set version="$VERSION"
+          # --pack-destination writes into the directory, it does not create
+          # it, and npm reports the miss as an ENOENT on the tarball itself.
+          mkdir -p artifacts
           npm pack --pack-destination artifacts
           # A stable filename as well as the versioned one, so
           # /releases/latest/download/slide.tgz is a URL that keeps working.

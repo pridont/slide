@@ -23,6 +23,5 @@
       ]
     }
   },
-  "pull-request-header": "A release is ready. Merging this tags the version, writes the changelog and attaches the installable tarball to the GitHub release.",
-  "separate-pull-requests": false
+  "pull-request-header": "Opened, merged and tagged by the Release Please workflow. It is here to record the version bump and the changelog entries; nothing is waiting on a review."
 }

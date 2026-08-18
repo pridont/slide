@@ -1,17 +1,22 @@
 name: Release Please
 
-# Turns conventional commits into releases.
+# Turns conventional commits into releases, with nothing to click.
 #
-# Every push to main updates a standing "chore(main): release x.y.z" pull
-# request holding the version bump and the CHANGELOG.md entries for everything
-# merged since the last release. Merging that pull request is the release: it
-# tags the commit, creates the GitHub release with those notes, and hands the
-# tag to release.yml, which builds the tarball and attaches it.
+# Only ever starts from a CI run that went green on main, so an unattended
+# release cannot tag a commit that does not build.
 #
-# So: nothing is released by pushing, and a release is one merge.
+# From there it is two passes of release-please in one job. release-please
+# will only tag a release pull request that is already merged, so the first
+# pass writes that pull request, the job merges it, and the second pass tags
+# the merge and creates the GitHub release. The merge has to happen here
+# rather than by hand: it is made with GITHUB_TOKEN, and a push made with that
+# token deliberately starts no workflow, so the second pass has to be called
+# rather than waited for.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -27,22 +32,83 @@ concurrency:
 
 jobs:
   release-please:
-    name: version and changelog
+    name: version, changelog and release
+    # workflow_run fires whatever CI concluded, and for CI's pull_request runs
+    # as well as its pushes, so the gate is here rather than in the trigger.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
+      # Pass one: the version bump and the CHANGELOG.md entries, as a pull
+      # request. Nothing to tag yet, and asking would only find the release
+      # before this one.
+      - uses: googleapis/release-please-action@v5
+        id: prepare
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          skip-github-release: true
+
+      # No releasable commits since the last tag means no pull request, and
+      # nothing to merge.
+      - name: Merge the release pull request
+        if: steps.prepare.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # `pr` is the whole pull request as JSON; only the number is wanted.
+          PR: ${{ steps.prepare.outputs.pr }}
+        run: |
+          NUMBER=$(printf '%s' "$PR" | jq -r '.number')
+
+          # Mergeability is computed after the pull request exists, and this
+          # one is seconds old — asking too early answers UNKNOWN, and merging
+          # on UNKNOWN is refused.
+          for _ in $(seq 30); do
+            STATE=$(gh pr view "$NUMBER" --json mergeable --jq .mergeable)
+            [ "$STATE" = UNKNOWN ] || break
+            sleep 2
+          done
+          if [ "$STATE" != MERGEABLE ]; then
+            echo "::error::pull request #${NUMBER} is ${STATE}, not MERGEABLE"
+            exit 1
+          fi
+
+          gh pr merge "$NUMBER" --squash --delete-branch
+
+          # Same again for the merge itself: the second pass below reads the
+          # merged state back off the API, so wait until the API agrees.
+          for _ in $(seq 30); do
+            if [ "$(gh pr view "$NUMBER" --json state --jq .state)" = MERGED ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::pull request #${NUMBER} never reached MERGED"
+          exit 1
+
+      # Pass two: tag the commit that merge just made and create the GitHub
+      # release, with the notes from the pull request body.
+      #
+      # Deliberately unconditional. If a previous run merged a release pull
+      # request and then died before tagging it, pass one above refuses to
+      # write any further release pull request until that one is tagged — so
+      # running this every time is what digs the repository back out, rather
+      # than leaving a state only a human can clear.
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          skip-github-pull-request: true
 
-  # Only reached on the push that merged the release pull request, where
-  # release-please has just created the tag and the release. It cannot be a tag
-  # trigger: a tag pushed with GITHUB_TOKEN deliberately starts no workflow, so
-  # the release has to be called rather than waited for.
+  # release-please has made the tag and the release; this hangs the installable
+  # tarball off it. A separate workflow because a tag cut by hand needs the
+  # same thing done to it.
   publish:
     name: attach the tarball
     needs: release-please
