@@ -27,7 +27,7 @@ curl -fsSL https://pridont.github.io/slide/install.sh | less
 | --- | --- |
 | Node.js 20 or newer | the CLI is an ES module and uses `node:util`'s `parseArgs` |
 | npm | it resolves the CLI's dependencies; it ships with Node |
-| `curl` or `wget` | to reach the GitHub API and download the release |
+| `curl` or `wget` | to download the release |
 
 ### Options
 
@@ -40,7 +40,7 @@ curl -fsSL https://pridont.github.io/slide/install.sh | SLIDE_VERSION=v0.2.0 sh
 # Your own fork
 curl -fsSL https://pridont.github.io/slide/install.sh | SLIDE_REPO=you/slide sh
 
-# A private repository, or an API that is rate-limiting you
+# A private repository
 curl -fsSL https://pridont.github.io/slide/install.sh | GITHUB_TOKEN=ghp_… sh
 ```
 
