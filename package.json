@@ -1,6 +1,6 @@
 {
   "name": "slide",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "description": "A simple and minimal markdown-based web slideshow builder",
