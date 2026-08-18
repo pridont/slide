@@ -240,6 +240,7 @@ function layout(page, html, toc, nav, pages, index) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
     <title>${escapeHtml(page.slug === 'index' ? page.title : `${page.title} — slide`)}</title>
     ${page.description ? `<meta name="description" content="${escapeHtml(page.description)}" />` : ''}
     <link rel="stylesheet" href="${base}assets/tokens.css" />
@@ -362,6 +363,7 @@ function notFound(nav, pages) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
     <title>Not found — slide</title>
     <link rel="stylesheet" href="${base}assets/tokens.css" />
     <link rel="stylesheet" href="${base}assets/docs.css" />
