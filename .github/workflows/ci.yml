@@ -12,10 +12,6 @@ concurrency:
 
 jobs:
   check:
-    # One version, not a matrix over what `engines` allows: pnpm 11 needs Node
-    # 22.13 or newer, so a job on Node 20 cannot get as far as installing. The
-    # floor in `engines` is what the published CLI needs, which npm installs
-    # without pnpm anywhere near it; nothing in CI verifies it.
     name: lint, typecheck, tests
     runs-on: ubuntu-latest
     steps:
