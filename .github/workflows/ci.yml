@@ -12,14 +12,8 @@ concurrency:
 
 jobs:
   check:
-    # `engines` says Node 20 or newer, so both ends of that get tested: 20 is
-    # the promise, 24 is what anyone installing today will actually run.
-    name: lint, typecheck, tests (node ${{ matrix.node }})
+    name: lint, typecheck, tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [20, 24]
     steps:
       - uses: actions/checkout@v7
       # The pnpm version comes from `packageManager` in package.json — with no
@@ -27,7 +21,7 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
@@ -61,3 +55,37 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  commits:
+    # Commit messages are what release-please reads to pick the next version
+    # and write the changelog, so a message it cannot parse is a release note
+    # that goes missing. Same rules as the local .githooks/commit-msg hook.
+    name: commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # commitlint walks the range base..head, which needs the history.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Every commit on the branch
+        run: >
+          pnpm exec commitlint --verbose
+          --from ${{ github.event.pull_request.base.sha }}
+          --to ${{ github.event.pull_request.head.sha }}
+
+      # On a squash merge the pull request title is the commit message that
+      # lands on main, and it is the one release-please will read. Passed
+      # through the environment rather than interpolated into the script,
+      # because a title is whatever someone typed.
+      - name: The pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s' "$PR_TITLE" | pnpm exec commitlint --verbose

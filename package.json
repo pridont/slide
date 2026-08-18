@@ -35,7 +35,9 @@
     "docs": "node scripts/build-docs.mjs",
     "docs:serve": "node scripts/build-docs.mjs --serve",
     "docs:site": "pnpm build && pnpm run docs && node dist/cli/index.js build examples/basic.md --out docs-dist/demo --base /demo/ && node dist/cli/index.js build examples/project --out docs-dist/talks --base /talks/",
-    "check": "pnpm lint && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "prepare": "node scripts/setup-hooks.mjs",
+    "commitlint": "commitlint --edit"
   },
   "dependencies": {
     "highlight.js": "^11.12.0",
@@ -56,6 +58,8 @@
     }
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "@playwright/test": "^1.62.1",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.15.3",

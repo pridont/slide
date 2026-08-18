@@ -1,18 +1,29 @@
 name: Release
 
-# Push a tag, get a release with an npm tarball attached to it. That tarball is
-# what `install.sh` downloads and what `npm install -g <url>` installs, so this
-# workflow is the only thing standing between a tag and an installable CLI.
+# Builds the npm tarball for a tag and attaches it to that tag's GitHub
+# release. That tarball is what `install.sh` downloads and what
+# `npm install -g <url>` installs, so this workflow is the only thing standing
+# between a tag and an installable CLI. Nothing here publishes to npm.
 #
-#   git tag v0.2.0 && git push origin v0.2.0
+# Normally it is not run by hand: release-please.yml merges a release pull
+# request, creates the tag and the release, and then calls this workflow. The
+# tag push and dispatch triggers are the manual way back in when something
+# needs re-cutting.
 on:
-  push:
-    tags: ['v*']
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag to build and attach assets to, e.g. v0.2.0'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
         description: 'Tag to build and release, e.g. v0.2.0'
         required: true
+        type: string
+  push:
+    tags: ['v*']
 
 permissions:
   contents: write
@@ -22,6 +33,14 @@ jobs:
     name: pack and publish
     runs-on: ubuntu-latest
     steps:
+      # `inputs.tag` is set by both the dispatch and the reusable-workflow
+      # call; on a tag push there is no input and the ref is the tag.
+      - name: Work out the version
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          echo "TAG=$TAG" >>"$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >>"$GITHUB_ENV"
+
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref }}
@@ -36,16 +55,11 @@ jobs:
       # A broken release is worse than a late one.
       - run: pnpm check
 
-      - name: Work out the version
-        run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
-          echo "TAG=$TAG" >>"$GITHUB_ENV"
-          echo "VERSION=${TAG#v}" >>"$GITHUB_ENV"
-
       - run: pnpm build
 
-      # The tag is the version. package.json is stamped here rather than
-      # committed, so a tag is the only thing a release needs.
+      # The tag is the version. release-please has already committed the same
+      # number to package.json, but stamping it here as well means a tag cut by
+      # hand still produces a correctly versioned tarball.
       - name: Pack
         run: |
           npm pkg set version="$VERSION"
@@ -64,6 +78,8 @@ jobs:
           slide build /tmp/smoke.md --out /tmp/smoke-dist
           test -f /tmp/smoke-dist/index.html
 
+      # release-please has usually created the release already, notes and all;
+      # then this only uploads. The create branch is for a tag pushed by hand.
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}

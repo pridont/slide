@@ -20,7 +20,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const docs = join(root, 'docs')
 const themeDir = join(root, 'src', 'theme')
 
-const REPO = 'https://github.com/pridonte/slide'
+const REPO = 'https://github.com/pridont/slide'
 
 const { values } = parseArgs({
   options: {

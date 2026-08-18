@@ -2,7 +2,7 @@
 #
 # Installs the `slide` CLI from a GitHub release.
 #
-#   curl -fsSL https://pridonte.github.io/slide/install.sh | sh
+#   curl -fsSL https://pridont.github.io/slide/install.sh | sh
 #
 # It resolves a release (the latest, unless SLIDE_VERSION says otherwise),
 # downloads the npm tarball attached to it, and installs it globally with npm.
@@ -14,10 +14,10 @@
 #
 set -eu
 
-REPO="${SLIDE_REPO:-pridonte/slide}"
+REPO="${SLIDE_REPO:-pridont/slide}"
 VERSION="${SLIDE_VERSION:-latest}"
 API="https://api.github.com/repos/${REPO}/releases"
-DOCS="https://pridonte.github.io/slide/"
+DOCS="https://pridont.github.io/slide/"
 NODE_MINIMUM=20
 
 WORK=""
@@ -40,11 +40,11 @@ usage() {
   cat <<'EOF'
 slide installer
 
-  curl -fsSL https://pridonte.github.io/slide/install.sh | sh
+  curl -fsSL https://pridont.github.io/slide/install.sh | sh
 
 Environment:
   SLIDE_VERSION   a release tag, e.g. v0.2.0 (default: the latest release)
-  SLIDE_REPO      owner/name to install from (default: pridonte/slide)
+  SLIDE_REPO      owner/name to install from (default: pridont/slide)
   GITHUB_TOKEN    used for the API call, against rate limits or a private repo
 EOF
 }

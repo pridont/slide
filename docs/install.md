@@ -6,7 +6,7 @@ description: One line to get the CLI, and the three other ways in case that line
 ## The install script
 
 ```sh
-curl -fsSL https://pridonte.github.io/slide/install.sh | sh
+curl -fsSL https://pridont.github.io/slide/install.sh | sh
 ```
 
 It resolves the latest GitHub release, downloads the npm tarball attached to
@@ -14,11 +14,11 @@ it, and installs that globally with npm. Then it runs `slide --version` and
 tells you if the binary is not on your `PATH`.
 
 Piping a script into a shell is worth reading first. It is
-[one file](https://github.com/pridonte/slide/blob/main/install.sh), about a
+[one file](https://github.com/pridont/slide/blob/main/install.sh), about a
 hundred lines, and it only ever calls `curl`, `npm` and `node`:
 
 ```sh
-curl -fsSL https://pridonte.github.io/slide/install.sh | less
+curl -fsSL https://pridont.github.io/slide/install.sh | less
 ```
 
 ### Requirements
@@ -35,13 +35,13 @@ The script reads three environment variables:
 
 ```sh
 # A specific release rather than the latest
-curl -fsSL https://pridonte.github.io/slide/install.sh | SLIDE_VERSION=v0.2.0 sh
+curl -fsSL https://pridont.github.io/slide/install.sh | SLIDE_VERSION=v0.2.0 sh
 
 # Your own fork
-curl -fsSL https://pridonte.github.io/slide/install.sh | SLIDE_REPO=you/slide sh
+curl -fsSL https://pridont.github.io/slide/install.sh | SLIDE_REPO=you/slide sh
 
 # A private repository, or an API that is rate-limiting you
-curl -fsSL https://pridonte.github.io/slide/install.sh | GITHUB_TOKEN=ghp_… sh
+curl -fsSL https://pridont.github.io/slide/install.sh | GITHUB_TOKEN=ghp_… sh
 ```
 
 ## npm, without the script
@@ -50,7 +50,7 @@ The release asset is an ordinary npm tarball, so npm can install it straight
 from its URL — no script involved:
 
 ```sh
-npm install -g https://github.com/pridonte/slide/releases/latest/download/slide.tgz
+npm install -g https://github.com/pridont/slide/releases/latest/download/slide.tgz
 ```
 
 ### As a project dependency
@@ -59,7 +59,7 @@ A deck kept in a repository is usually better off with the CLI pinned beside
 it, so everyone who checks it out builds it with the same version:
 
 ```sh
-npm install -D https://github.com/pridonte/slide/releases/download/v0.2.0/slide-0.2.0.tgz
+npm install -D https://github.com/pridont/slide/releases/download/v0.2.0/slide-0.2.0.tgz
 npx slide build slides/
 ```
 
@@ -73,7 +73,7 @@ import type { ProjectConfig } from 'slide'
 ## From source
 
 ```sh
-git clone https://github.com/pridonte/slide.git
+git clone https://github.com/pridont/slide.git
 cd slide
 pnpm install
 pnpm build
@@ -101,7 +101,7 @@ renders differently somewhere else. See [Diagrams](./diagrams.md).
 Run the install script again — it always resolves the latest release:
 
 ```sh
-curl -fsSL https://pridonte.github.io/slide/install.sh | sh
+curl -fsSL https://pridont.github.io/slide/install.sh | sh
 ```
 
 ## Uninstalling
