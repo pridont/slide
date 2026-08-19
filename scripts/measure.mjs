@@ -44,10 +44,27 @@ function linkedFrom(html) {
   return [...grab(/<link rel="stylesheet" href="([^"]+)"/g), ...grab(/<script[^>]*\bsrc="([^"]+)"/g)]
 }
 
+/**
+ * The CLI, run for real. Its stderr is the interesting part of a failure —
+ * execFileSync would otherwise throw with the raw byte buffer in it.
+ */
+function buildDeck(entry, out) {
+  try {
+    execFileSync('node', [CLI, 'build', entry, '--out', out], { cwd: ROOT, stdio: 'pipe' })
+  } catch (error) {
+    const stderr = String(error.stderr ?? '').trim()
+    const hint = /playwright|browserType\.launch/i.test(stderr)
+      ? '\n\nA deck with a ```mermaid fence needs a browser to draw it:\n' +
+        '  pnpm exec playwright install chromium'
+      : ''
+    throw new Error(`measuring ${relative(ROOT, entry)} failed.\n\n${stderr}${hint}`)
+  }
+}
+
 async function measureDeck(label, entry) {
   const out = await mkdtemp(join(tmpdir(), 'slide-measure-'))
   try {
-    execFileSync('node', [CLI, 'build', entry, '--out', out], { cwd: ROOT, stdio: 'pipe' })
+    buildDeck(entry, out)
 
     // Slide 1 of the first deck: a project puts an index page at the root.
     const files = await tree(out)
@@ -181,7 +198,7 @@ async function measureDiagrams() {
     for (let attempt = 0; attempt < 3; attempt++) {
       if (clearCache) await rm(cache, { recursive: true, force: true })
       const started = process.hrtime.bigint()
-      execFileSync('node', [CLI, 'build', project, '--out', out], { cwd: ROOT, stdio: 'pipe' })
+      buildDeck(project, out)
       times.push(Number(process.hrtime.bigint() - started) / 1e6)
     }
     return Math.min(...times)
