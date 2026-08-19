@@ -1,13 +1,32 @@
 import type { Deck, Slide } from '../parse/types.js'
 import { escapeHtml } from './html.js'
 
+export interface PageScript {
+  readonly src: string
+  /**
+   * `type=module`, which defers execution to after the parse. Dev needs it for
+   * Vite's module graph; a build emits one classic, parser-blocking script,
+   * because the view-transition hooks at the top of it have to be listening
+   * before the first render.
+   */
+  readonly module?: boolean
+}
+
 export interface PageAssets {
   /** Stylesheet URLs, emitted as `<link rel=stylesheet>`. */
   readonly styles: readonly string[]
-  /** Module script URLs, emitted as `<script type=module>`. */
-  readonly modules: readonly string[]
-  /** The parser-blocking head script — see head-script.ts. */
-  readonly head: string
+  /** Scripts, in order. A build emits exactly one. */
+  readonly scripts: readonly PageScript[]
+}
+
+/** Stylesheets first, so the parser-blocking script does not delay the paint. */
+export function assetTags(assets: PageAssets): string[] {
+  return [
+    ...assets.styles.map((href) => `<link rel="stylesheet" href="${escapeHtml(href)}">`),
+    ...assets.scripts.map(
+      (script) => `<script${script.module ? ' type="module"' : ''} src="${escapeHtml(script.src)}"></script>`,
+    ),
+  ]
 }
 
 export interface PageInput {
@@ -42,8 +61,6 @@ export function renderPage(input: PageInput): string {
     // Before any stylesheet lands, this is what stops the browser painting a
     // white page between one slide and the next.
     `<meta name="color-scheme" content="${input.deck.meta.colorScheme === 'light' ? 'light' : 'dark'}">`,
-    // Must run before the first render opportunity; see head-script.ts.
-    `<script src="${escapeHtml(input.assets.head)}"></script>`,
   ]
 
   const description = input.deck.meta.description
@@ -67,12 +84,7 @@ export function renderPage(input: PageInput): string {
     head.push(`<script type="speculationrules">${rules.replace(/</g, '\\u003c')}</script>`)
   }
 
-  for (const href of input.assets.styles) {
-    head.push(`<link rel="stylesheet" href="${escapeHtml(href)}">`)
-  }
-  for (const src of input.assets.modules) {
-    head.push(`<script type="module" src="${escapeHtml(src)}"></script>`)
-  }
+  head.push(...assetTags(input.assets))
 
   const htmlAttributes = [`lang="${escapeHtml(input.lang ?? 'en')}"`]
   // On the document element, so the palette is right at first paint.

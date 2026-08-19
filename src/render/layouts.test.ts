@@ -11,7 +11,7 @@ function slide(source: string, templates?: Record<string, string>): string {
     slide: deck.slides[0]!,
     resolveAsset: (ref) => `/assets/${ref.replace('./', '')}-hashed`,
     href: (index) => `/${index}/`,
-    assets: { styles: [], modules: [], head: '/head.js' },
+    assets: { styles: [], scripts: [] },
     ...(templates ? { templates } : {}),
   })
 }

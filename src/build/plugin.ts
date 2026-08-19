@@ -1,9 +1,10 @@
 import { readFile } from 'node:fs/promises'
-import type { Plugin } from 'vite'
+import { transformWithEsbuild, type Plugin } from 'vite'
 import type { Project, ProjectDeck } from '../project/index.js'
 import { createMarkdown, renderPresenter, renderSlidePage } from '../render/index.js'
 import { renderIndexPage, type IndexEntry } from '../render/index-page.js'
 import { isResolvableRef } from '../render/html.js'
+import type { PageAssets } from '../render/page.js'
 import { AssetEmitter, type EmittedAsset, type MissingAsset } from './assets.js'
 import { clientScript } from './client-script.js'
 import { renderProjectDiagrams } from './diagrams.js'
@@ -39,6 +40,8 @@ export interface SlidePluginOptions {
   readonly project: Project
   readonly assetsDir: string
   readonly report: BuildReport
+  /** Vite's own setting, mirrored so the IIFE wrap around the runtime matches. */
+  readonly minify: boolean
 }
 
 /**
@@ -56,12 +59,12 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
     enforce: 'post',
 
     async generateBundle(_outputOptions, bundle) {
-      const scripts: string[] = []
+      const entryChunks: { fileName: string; code: string }[] = []
       const bundledCss = new Set<string>()
 
       for (const output of Object.values(bundle)) {
         if (output.type !== 'chunk' || !output.isEntry) continue
-        scripts.push(project.base + output.fileName)
+        entryChunks.push({ fileName: output.fileName, code: output.code })
         for (const css of output.viteMetadata?.importedCss ?? []) bundledCss.add(css)
       }
 
@@ -69,10 +72,17 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
         this.emitFile({ type: 'asset', fileName, source })
       })
 
-      // Parser-blocking and external — see src/client/head.ts for why.
-      const head = await clientScript('head')
-      const headFileName = hashedFileName(options.assetsDir, 'head', head, '.js')
-      this.emitFile({ type: 'asset', fileName: headFileName, source: head })
+      const scripts = [
+        await mergeScripts({
+          bundle,
+          entryChunks,
+          head: await clientScript('head', { minify: options.minify }),
+          minify: options.minify,
+          base: project.base,
+          assetsDir: options.assetsDir,
+          emit: (fileName, source) => this.emitFile({ type: 'asset', fileName, source }),
+        }),
+      ]
 
       // One markdown instance for the whole build: the diagram pass parses
       // every slide to find its fences, and the pages parse them again.
@@ -106,10 +116,9 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
         }),
       ]
 
-      const pageAssets = {
+      const pageAssets: PageAssets = {
         styles: styleUrls,
-        modules: scripts,
-        head: project.base + headFileName,
+        scripts: scripts.map((src) => ({ src })),
       }
       const pages: EmittedPage[] = []
       const hasLayouts = Object.keys(project.layouts).length > 0
@@ -166,12 +175,55 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
       options.report.assets = assets.assets
       options.report.oversize = oversize(project, pages, assets.assets)
       options.report.missing = assets.missing
-      // What a page links, not what Vite happened to bundle — the head script
-      // and the merged stylesheet are emitted here, past Vite's own pass.
-      options.report.scripts = [project.base + headFileName, ...scripts]
+      // What a page links, not what Vite happened to bundle — both files are
+      // emitted here, past Vite's own pass.
+      options.report.scripts = scripts
       options.report.styles = styleUrls
     },
   }
+}
+
+/**
+ * One script for the whole site: the head hooks, then the runtime, as a single
+ * parser-blocking classic file.
+ *
+ * They were two because they run at different times — the hooks have to be
+ * listening before the first render, which a module cannot promise since it
+ * waits on its imports, so the runtime was deferred and the hooks were not.
+ * Concatenated and served parser-blocking, one file does both, and the runtime
+ * waits for `DOMContentLoaded` itself instead of asking the browser to.
+ *
+ * Vite builds the runtime as an ES module because that is the only format it
+ * extracts a stylesheet from; esbuild wraps the finished chunk here, which is
+ * what keeps its `const`s off `window`.
+ */
+async function mergeScripts(input: {
+  readonly bundle: Record<string, unknown>
+  readonly entryChunks: readonly { fileName: string; code: string }[]
+  readonly head: string
+  readonly minify: boolean
+  readonly base: string
+  readonly assetsDir: string
+  readonly emit: (fileName: string, source: string) => void
+}): Promise<string> {
+  const parts = [input.head]
+
+  for (const chunk of input.entryChunks) {
+    const { code } = await transformWithEsbuild(chunk.code, chunk.fileName, {
+      loader: 'js',
+      format: 'iife',
+      target: 'es2020',
+      minify: input.minify,
+      sourcemap: false,
+    })
+    parts.push(code.trim())
+    delete input.bundle[chunk.fileName]
+  }
+
+  const source = parts.join('\n')
+  const fileName = hashedFileName(input.assetsDir, 'runtime', source, '.js')
+  input.emit(fileName, source)
+  return input.base + fileName
 }
 
 /**
@@ -236,11 +288,7 @@ async function projectStyles(project: Project): Promise<string[]> {
   )
 }
 
-function renderProjectIndex(
-  project: Project,
-  assets: AssetEmitter,
-  pageAssets: { styles: string[]; modules: string[]; head: string },
-): string {
+function renderProjectIndex(project: Project, assets: AssetEmitter, pageAssets: PageAssets): string {
   return renderIndexPage({
     title: project.config.title ?? 'Slides',
     description: project.config.description,

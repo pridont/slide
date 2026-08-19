@@ -192,16 +192,23 @@ describe('what a built page depends on', () => {
     expect(inlineScripts).toEqual(['<script type="speculationrules">'])
   }, 30_000)
 
-  it('ships the head script as a real file and the deck CSS inside the one stylesheet', async () => {
+  it('ships one script and one stylesheet, with everything generated inside them', async () => {
     const { html, files, out } = await buildPage('---\naspectRatio: "4:3"\n---\n\n# One\n')
 
-    expect(files.some((name) => /^head-[\w-]+\.js$/.test(name))).toBe(true)
-    expect(html).toMatch(/<script src="\/assets\/head-[\w-]+\.js"><\/script>/)
-
-    // Not a stylesheet of its own: the deck tokens only mean anything beside
-    // the theme they override, so they travel with it.
+    const scripts = files.filter((name) => name.endsWith('.js'))
     const stylesheets = files.filter((name) => name.endsWith('.css'))
+    expect(scripts).toHaveLength(1)
     expect(stylesheets).toHaveLength(1)
+    expect(html).toMatch(/<script src="\/assets\/runtime-[\w-]+\.js"><\/script>/)
+
+    // The head hooks are inside that script, ahead of the runtime, rather than
+    // a second file the page has to fetch.
+    const js = await readFile(join(out, 'assets', scripts[0]!), 'utf8')
+    expect(js).toContain('pageswap')
+    expect(js.indexOf('pageswap')).toBeLessThan(js.indexOf('slide-presenter'))
+
+    // Nor is the deck CSS a stylesheet of its own: the tokens only mean
+    // anything beside the theme they override, so they travel with it.
     expect(await readFile(join(out, 'assets', stylesheets[0]!), 'utf8')).toContain('--slide-aspect:4/3')
   }, 30_000)
 

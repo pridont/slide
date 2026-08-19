@@ -32,17 +32,18 @@ export async function build(options: BuildOptions): Promise<BuildOutcome> {
 
   const outDir = resolve(options.outDir ?? project.config.outDir ?? resolve(project.root, 'dist'))
   const report: BuildReport = { pages: [], assets: [], missing: [], oversize: [], scripts: [], styles: [] }
+  const minify = options.minify ?? true
 
   await viteBuild({
     root: project.root,
     base: project.base,
     logLevel: 'warn',
     configFile: false,
-    plugins: [slidePlugin({ project, assetsDir: ASSETS_DIR, report })],
+    plugins: [slidePlugin({ project, assetsDir: ASSETS_DIR, report, minify })],
     build: {
       outDir,
       emptyOutDir: true,
-      minify: options.minify ?? true,
+      minify,
       rollupOptions: {
         // One entry for the whole project — what makes the runtime and its
         // stylesheet shared by every page of every deck.

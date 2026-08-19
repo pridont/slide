@@ -20,7 +20,7 @@ function renderFirstSlide(source: string): string {
     slide: deck.slides[0]!,
     resolveAsset,
     href: (index) => (index === 1 ? './' : `./${index}/`),
-    assets: { styles: ['/base.css'], modules: ['/runtime.js'], head: '/head.js' },
+    assets: { styles: ['/base.css'], scripts: [{ src: '/runtime.js' }] },
     deckId: 'talk',
   })
 }
@@ -112,7 +112,7 @@ describe('layouts', () => {
         slide: deck.slides[1]!,
         resolveAsset,
         href: () => './',
-        assets: { styles: [], modules: [], head: '/head.js' },
+        assets: { styles: [], scripts: [] },
       })
     }).toThrow(/unknown layout "nope"\. Available layouts: center, cover, default, full-image, image-left/)
     expect(thrown).toBeUndefined()
@@ -145,7 +145,7 @@ describe('page shell', () => {
         slide: deck.slides[index]!,
         resolveAsset,
         href: () => './',
-        assets: { styles: [], modules: [], head: '/head.js' },
+        assets: { styles: [], scripts: [] },
       })
     expect(page(0)).toContain('<meta name="description" content="About">')
     expect(page(1)).not.toContain('name="description"')
@@ -154,7 +154,7 @@ describe('page shell', () => {
   it('links assets in the head', () => {
     const html = renderFirstSlide('# One\n')
     expect(html).toContain('<link rel="stylesheet" href="/base.css">')
-    expect(html).toContain('<script type="module" src="/runtime.js"></script>')
+    expect(html).toContain('<script src="/runtime.js"></script>')
   })
 
   it('exposes navigation to the runtime as data attributes', () => {
@@ -164,7 +164,7 @@ describe('page shell', () => {
       slide: deck.slides[1]!,
       resolveAsset,
       href: (index) => (index === 1 ? './' : `./${index}/`),
-      assets: { styles: [], modules: [], head: '/head.js' },
+      assets: { styles: [], scripts: [] },
     })
     expect(html).toContain('data-slide="2"')
     expect(html).toContain('data-total="3"')
@@ -211,7 +211,7 @@ describe('SlideParseError plumbing', () => {
         slide: deck.slides[0]!,
         resolveAsset,
         href: () => './',
-        assets: { styles: [], modules: [], head: '/head.js' },
+        assets: { styles: [], scripts: [] },
       })
       expect.unreachable()
     } catch (error) {

@@ -19,7 +19,7 @@ title: Talk
 # Three
 `
 
-const ASSETS = { styles: ['/base.css'], modules: ['/runtime.js'], head: '/head.js' }
+const ASSETS = { styles: ['/base.css'], scripts: [{ src: '/runtime.js' }] }
 
 function presenter(source = DECK): string {
   const deck = parseDeck(source, '/talk.md')
@@ -48,7 +48,7 @@ describe('the presenter page', () => {
     const html = presenter()
 
     expect(html).toContain('<link rel="stylesheet" href="/base.css">')
-    expect(html).toContain('<script type="module" src="/runtime.js"></script>')
+    expect(html).toContain('<script src="/runtime.js"></script>')
   })
 
   it("carries every slide's URL and notes in the markup", () => {
