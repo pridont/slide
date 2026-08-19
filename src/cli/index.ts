@@ -142,7 +142,7 @@ async function main(argv: string[]): Promise<number> {
         : decks.map((target) => `  · ${target.slug}/  ${target.deck.slides.length}`)),
       `  pages   ${pages.length} (${kb(pageBytes)})`,
       `  assets  ${assets.length} (${kb(assetBytes)})`,
-      `  shared  ${scripts.length} script, ${styles.length} stylesheet`,
+      `  shared  ${count(scripts.length, 'script')}, ${count(styles.length, 'stylesheet')}`,
       '',
     ].join('\n'),
   )
@@ -167,6 +167,10 @@ async function main(argv: string[]): Promise<number> {
 
 function kb(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} kB`
+}
+
+function count(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? '' : 's'}`
 }
 
 /** Not the server's own `printUrls()`, which the `warn` log level swallows. */

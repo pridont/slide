@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import type { Plugin } from 'vite'
 import type { Project, ProjectDeck } from '../project/index.js'
 import { createMarkdown, renderPresenter, renderSlidePage } from '../render/index.js'
@@ -8,7 +9,7 @@ import { clientScript } from './client-script.js'
 import { renderProjectDiagrams } from './diagrams.js'
 import { generateDeckCss, hashedFileName } from './generated.js'
 import { MermaidRenderer } from './mermaid.js'
-import { presenterPagePath, presenterUrl, slidePagePath, slideUrl } from './paths.js'
+import { displayPath, presenterPagePath, presenterUrl, slidePagePath, slideUrl } from './paths.js'
 
 export interface EmittedPage {
   readonly fileName: string
@@ -29,7 +30,7 @@ export interface BuildReport {
   assets: EmittedAsset[]
   missing: MissingAsset[]
   oversize: Oversize[]
-  /** Public URLs of the bundled entry chunks and their stylesheets. */
+  /** Public URLs of every script and stylesheet a page links. */
   scripts: string[]
   styles: string[]
 }
@@ -56,12 +57,12 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
 
     async generateBundle(_outputOptions, bundle) {
       const scripts: string[] = []
-      const styles = new Set<string>()
+      const bundledCss = new Set<string>()
 
       for (const output of Object.values(bundle)) {
         if (output.type !== 'chunk' || !output.isEntry) continue
         scripts.push(project.base + output.fileName)
-        for (const css of output.viteMetadata?.importedCss ?? []) styles.add(project.base + css)
+        for (const css of output.viteMetadata?.importedCss ?? []) bundledCss.add(css)
       }
 
       const assets = new AssetEmitter(project.base, options.assetsDir, (fileName, source) => {
@@ -89,15 +90,21 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
       }
 
       const deckCss = generateDeckCss(project, (ref, from) => assets.resolve(ref, from), diagrams.css)
-      const styleUrls = [...styles]
-      if (deckCss !== '') {
-        const cssFileName = hashedFileName(options.assetsDir, 'decks', deckCss, '.css')
-        this.emitFile({ type: 'asset', fileName: cssFileName, source: deckCss })
-        styleUrls.push(project.base + cssFileName)
-      }
 
-      // Last, so a project's own CSS can override the theme it loads after.
-      for (const path of project.styles) styleUrls.push(assets.resolve(path, path))
+      // The theme, then what the decks generated, then the project's own — in
+      // that order, so a project stylesheet can override everything it loads
+      // after. Concatenated rather than linked one after another: three
+      // requests that always arrive together are one request.
+      const styleUrls = [
+        mergeStylesheets({
+          bundle,
+          bundledCss,
+          extra: [deckCss, ...(await projectStyles(project))],
+          base: project.base,
+          assetsDir: options.assetsDir,
+          emit: (fileName, source) => this.emitFile({ type: 'asset', fileName, source }),
+        }),
+      ]
 
       const pageAssets = {
         styles: styleUrls,
@@ -159,10 +166,74 @@ export function slidePlugin(options: SlidePluginOptions): Plugin {
       options.report.assets = assets.assets
       options.report.oversize = oversize(project, pages, assets.assets)
       options.report.missing = assets.missing
-      options.report.scripts = scripts
-      options.report.styles = [...styles]
+      // What a page links, not what Vite happened to bundle — the head script
+      // and the merged stylesheet are emitted here, past Vite's own pass.
+      options.report.scripts = [project.base + headFileName, ...scripts]
+      options.report.styles = styleUrls
     },
   }
+}
+
+/**
+ * One stylesheet for the whole site, out of Vite's own and everything
+ * generated after it.
+ *
+ * Vite's CSS asset is replaced rather than joined by a second link: it is the
+ * theme, and the deck tokens that follow it only mean anything alongside it.
+ * When there is nothing to add — a deck with no background, no `theme:` and no
+ * project stylesheet — Vite's asset is already the whole thing and is left
+ * exactly as it is, hash included.
+ */
+function mergeStylesheets(input: {
+  readonly bundle: Record<string, { type: string; source?: unknown }>
+  readonly bundledCss: ReadonlySet<string>
+  readonly extra: readonly string[]
+  readonly base: string
+  readonly assetsDir: string
+  readonly emit: (fileName: string, source: string) => void
+}): string {
+  const extra = input.extra.filter((css) => css.trim() !== '')
+  const [only] = [...input.bundledCss]
+
+  if (extra.length === 0 && only !== undefined) return input.base + only
+
+  const parts: string[] = []
+  for (const fileName of input.bundledCss) {
+    const asset = input.bundle[fileName]
+    if (asset?.type === 'asset') parts.push(String(asset.source))
+    // Deleted from the bundle, not left beside the merged file: a stylesheet
+    // nothing links is a stylesheet someone will one day link.
+    delete input.bundle[fileName]
+  }
+  parts.push(...extra)
+
+  const css = parts.join('\n')
+  const fileName = hashedFileName(input.assetsDir, 'runtime', css, '.css')
+  input.emit(fileName, css)
+  return input.base + fileName
+}
+
+/**
+ * The project's own stylesheets, read rather than copied, since they are
+ * concatenated into the one the pages link.
+ */
+async function projectStyles(project: Project): Promise<string[]> {
+  return Promise.all(
+    project.styles.map(async (path) => {
+      const css = await readFile(path, 'utf8')
+
+      // `@import` is only valid at the top of a stylesheet, so it cannot
+      // survive being concatenated after the theme.
+      if (/^[^{}]*?@import\b/.test(css)) {
+        throw new Error(
+          `${displayPath(path)} uses @import.\n` +
+            'A build emits one stylesheet, so an @import partway through it would be ignored. ' +
+            'List the imported file in `css:` instead — they are concatenated in the order given.',
+        )
+      }
+      return css
+    }),
+  )
 }
 
 function renderProjectIndex(

@@ -192,13 +192,17 @@ describe('what a built page depends on', () => {
     expect(inlineScripts).toEqual(['<script type="speculationrules">'])
   }, 30_000)
 
-  it('ships the head script and the deck CSS as real files', async () => {
-    const { html, files } = await buildPage('---\naspectRatio: "4:3"\n---\n\n# One\n')
+  it('ships the head script as a real file and the deck CSS inside the one stylesheet', async () => {
+    const { html, files, out } = await buildPage('---\naspectRatio: "4:3"\n---\n\n# One\n')
 
     expect(files.some((name) => /^head-[\w-]+\.js$/.test(name))).toBe(true)
-    expect(files.some((name) => /^decks-[\w-]+\.css$/.test(name))).toBe(true)
     expect(html).toMatch(/<script src="\/assets\/head-[\w-]+\.js"><\/script>/)
-    expect(html).toMatch(/<link rel="stylesheet" href="\/assets\/decks-[\w-]+\.css">/)
+
+    // Not a stylesheet of its own: the deck tokens only mean anything beside
+    // the theme they override, so they travel with it.
+    const stylesheets = files.filter((name) => name.endsWith('.css'))
+    expect(stylesheets).toHaveLength(1)
+    expect(await readFile(join(out, 'assets', stylesheets[0]!), 'utf8')).toContain('--slide-aspect:4/3')
   }, 30_000)
 
   it('puts a deck-supplied font through the asset pipeline', async () => {
@@ -207,20 +211,19 @@ describe('what a built page depends on', () => {
     const font = files.find((name) => /^inter-[\w-]+\.woff2$/.test(name))
     expect(font).toBeDefined()
 
-    const css = await readFile(
-      join(out, 'assets', files.find((name) => name.startsWith('decks-')) ?? ''),
-      'utf8',
-    )
+    const stylesheet = files.find((name) => name.endsWith('.css'))
+    expect(stylesheet).toBeDefined()
+
+    const css = await readFile(join(out, 'assets', stylesheet!), 'utf8')
     expect(css).toContain(`url("/assets/${font}")`)
     // Linked, not inlined, and nothing about it reaches the page itself.
-    expect(html).toContain('decks-')
     expect(html).not.toContain('@font-face')
   }, 30_000)
 
-  it('omits the deck stylesheet when there is nothing to put in it', async () => {
+  it('links exactly one stylesheet when a deck generates no CSS at all', async () => {
     const { html, files } = await buildPage('# One\n')
 
-    expect(files.some((name) => name.startsWith('decks-'))).toBe(false)
-    expect(html).not.toContain('decks-')
+    expect(files.filter((name) => name.endsWith('.css'))).toHaveLength(1)
+    expect(html.match(/<link rel="stylesheet"/g)).toHaveLength(1)
   }, 30_000)
 })
