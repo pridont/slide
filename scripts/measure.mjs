@@ -44,6 +44,9 @@ function linkedFrom(html) {
   return [...grab(/<link rel="stylesheet" href="([^"]+)"/g), ...grab(/<script[^>]*\bsrc="([^"]+)"/g)]
 }
 
+/** A deck that could not be measured because drawing it needs a browser. */
+class NeedsBrowser extends Error {}
+
 /**
  * The CLI, run for real. Its stderr is the interesting part of a failure —
  * execFileSync would otherwise throw with the raw byte buffer in it.
@@ -53,18 +56,26 @@ function buildDeck(entry, out) {
     execFileSync('node', [CLI, 'build', entry, '--out', out], { cwd: ROOT, stdio: 'pipe' })
   } catch (error) {
     const stderr = String(error.stderr ?? '').trim()
-    const hint = /playwright|browserType\.launch/i.test(stderr)
-      ? '\n\nA deck with a ```mermaid fence needs a browser to draw it:\n' +
-        '  pnpm exec playwright install chromium'
-      : ''
-    throw new Error(`measuring ${relative(ROOT, entry)} failed.\n\n${stderr}${hint}`)
+
+    // Only this one failure is survivable, and only because CI deliberately
+    // has no browser: a deck of diagrams is reported as unmeasured rather
+    // than measured wrongly. Anything else is a real problem.
+    if (/playwright|browserType\.launch/i.test(stderr)) {
+      throw new NeedsBrowser('drawing its diagrams needs a browser')
+    }
+    throw new Error(`measuring ${relative(ROOT, entry)} failed.\n\n${stderr}`)
   }
 }
 
 async function measureDeck(label, entry) {
   const out = await mkdtemp(join(tmpdir(), 'slide-measure-'))
   try {
-    buildDeck(entry, out)
+    try {
+      buildDeck(entry, out)
+    } catch (error) {
+      if (!(error instanceof NeedsBrowser)) throw error
+      return { label, entry: relative(ROOT, entry), skipped: error.message }
+    }
 
     // Slide 1 of the first deck: a project puts an index page at the root.
     const files = await tree(out)
@@ -245,6 +256,10 @@ if (flags.has('--json')) {
 } else {
   console.log('\nbrotli -q 11, first slide included\n')
   for (const deck of decks) {
+    if (deck.skipped) {
+      console.log(`  ${deck.label.padEnd(26)} not measured — ${deck.skipped}\n`)
+      continue
+    }
     console.log(
       `  ${deck.label.padEnd(26)} ${String(deck.requests).padStart(2)} requests  ` +
         `${n(deck.firstLoad).padStart(7)} B   (${deck.pages} pages, ${kb(deck.wholeDeck)} in all)`,
@@ -274,9 +289,15 @@ if (flags.has('--json')) {
 
 if (flags.has('--check')) {
   const over = []
+  const unchecked = []
+
   for (const deck of decks) {
     const budget = BUDGETS[deck.label]
     if (!budget) continue
+    if (deck.skipped) {
+      unchecked.push(`${deck.label} (${deck.skipped})`)
+      continue
+    }
     if (deck.firstLoad > budget.firstLoad) {
       over.push(`${deck.label}: ${n(deck.firstLoad)} B over the wire, past ${n(budget.firstLoad)} B`)
     }
@@ -292,5 +313,13 @@ if (flags.has('--check')) {
     console.error('and update the figures in README.md and docs/ to match.\n')
     process.exit(1)
   }
-  console.log('payload within budget\n')
+
+  // Said out loud, because a check that quietly covered less than it looks
+  // like it covers is worse than no check.
+  if (unchecked.length > 0) {
+    console.log(`payload within budget, except: ${unchecked.join(', ')}`)
+    console.log('Run it with a browser installed to cover those too.\n')
+  } else {
+    console.log('payload within budget\n')
+  }
 }

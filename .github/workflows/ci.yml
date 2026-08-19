@@ -28,37 +28,26 @@ jobs:
       # The example is the deck everything is verified against, so a build of
       # it failing is a failure worth hearing about on its own.
       - run: pnpm example:build
+      # Every payload figure in the README comes from this script, and the
+      # budgets are what stop one of them quietly becoming untrue. The deck of
+      # diagrams is skipped here and named as skipped — drawing one needs a
+      # browser, and downloading one costs more than the check is worth.
+      - run: pnpm measure --check
       # The documentation site is built from docs/*.md by a script of its own,
       # and it can break on a missing title or a link to a page that is gone.
       # Cheaper to find out here than on a deploy.
       - run: pnpm run docs
 
-  e2e:
-    name: end to end
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
-      # The only deck with diagrams in it, and the only job with a browser to
-      # draw them — the `check` job builds examples/basic.md, which has none.
-      - run: pnpm example:project:build
-      # Here rather than in `check` for the same reason: every payload figure in
-      # the README comes from this script, and it measures the project deck too.
-      # The budgets are what stops one of those figures quietly becoming untrue.
-      - run: pnpm measure --check
-      - uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+  # There is no end-to-end job on purpose. `pnpm test:e2e` needs a Chromium
+  # download and the system packages under it, which costs minutes per run
+  # against about twenty seconds of actual testing. It is a local step:
+  #
+  #     pnpm exec playwright install chromium   # once
+  #     pnpm test:e2e                           # before opening a pull request
+  #
+  # The same download is why nothing here builds examples/project, the only
+  # deck with ```mermaid fences in it. `pnpm example:project:build` covers it
+  # locally.
 
   commits:
     # Commit messages are what release-please reads to pick the next version

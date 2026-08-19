@@ -435,7 +435,7 @@ deck depends on either.
 ```sh
 pnpm install
 pnpm check         # lint, typecheck, unit tests
-pnpm test:e2e      # Playwright, against a real build
+pnpm test:e2e      # Playwright, against a real build — local only, see below
 pnpm measure       # the payload figures quoted above
 pnpm example:dev   # the example deck, in the dev server
 pnpm example:project
@@ -447,6 +447,20 @@ pnpm docs:site     # the same, with both demo decks built into it
 shipping mermaid would cost, drawn in a real browser) and `--diagrams` (what
 drawing them at build time costs instead). Every number in this file and in
 `docs/` comes out of it.
+
+**The end-to-end tests are a local step.** CI does not run them: they need a
+Chromium download and the system packages under it, which costs minutes per
+run against about twenty seconds of testing. Once, and then before a pull
+request:
+
+```sh
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm example:project:build   # the only deck with diagrams, for the same reason
+```
+
+`pnpm measure` skips the deck of diagrams when there is no browser, and says
+which deck it skipped rather than quietly checking less.
 
 `src/parse` splits and validates, `src/render` turns a slide into a page,
 `src/build` emits the site, `src/dev` serves the same renderer from memory,
