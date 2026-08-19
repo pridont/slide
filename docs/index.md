@@ -24,8 +24,10 @@ them is a real browser navigation, and the next slide is already prerendered
 when you get there.
 
 There is no client-side router, no framework, and nothing to boot: a built deck
-is HTML, one shared script and one shared stylesheet — about 6 kB over the wire
-for the whole deck, whatever its length.
+is HTML, one shared script and one shared stylesheet — three requests and
+6.0 kB over the wire, first slide included, whatever the length of the deck.
+`pnpm measure` is where that number comes from, and CI fails if it stops being
+true.
 
 <ul class="cards">
   <li>

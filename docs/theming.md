@@ -33,7 +33,7 @@ Sixty of them, in six groups:
 | Group | Names | For |
 | --- | --- | --- |
 | Raw palette | `ink-*`, `paper-*`, `apricot-*`, `lilac-*`, `cyan-*` | the colours the semantic ones are derived from |
-| Semantic colour | `color-bg`, `color-panel`, `color-fg`, `color-muted`, `color-backdrop`, `color-accent`, `color-accent-contrast`, `rule`, `rule-strong` | what the stylesheet actually reads |
+| Semantic colour | `color-bg`, `color-panel`, `color-fg`, `color-muted`, `color-backdrop`, `color-apricot`, `color-lilac`, `color-cyan`, `color-accent`, `color-accent-contrast`, `rule`, `rule-strong` | what the stylesheet actually reads |
 | Syntax | `syn-comment`, `syn-keyword`, `syn-function`, `syn-string`, `syn-number`, `syn-class`, `syn-builtin`, `syn-property`, `syn-punct` | highlighted code |
 | Type | `font-body`, `font-heading`, `font-mono`, `font-size`, `fs-*`, `lh-*`, `tracking-*` | faces, sizes, leading, tracking |
 | Space | `padding`, `gap`, `radius-panel`, `radius-code`, `radius-pill` | the shape of things |

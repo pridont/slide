@@ -137,16 +137,21 @@ Content-Security-Policy:
   font-src    'self'
 ```
 
-There is nothing to hash and nothing to allow, because there is no inline
-script and no inline `style` attribute anywhere in a page: custom properties
-that would have been inline styles are generated into a stylesheet instead, and
-the one script that must run before the first render is an external
-parser-blocking file.
+The speculation rules are the one inline script, and `'inline-speculation-rules'`
+is what allows them. Dropping that keyword fails silently — prerendering stops
+with no console warning. The alternative is a `Speculation-Rules` response
+header, which needs server configuration a static host may not offer.
 
-`'inline-speculation-rules'` is the exception, and dropping it fails silently —
-prerendering stops with no console warning. The alternative is a
-`Speculation-Rules` response header, which needs server configuration a static
-host may not offer.
+Nothing else needs hashing or allowing: there is no other inline script and no
+inline `style` attribute anywhere in a page. Custom properties that would have
+been inline styles are generated into the stylesheet instead, and the script
+that must run before the first render is an external parser-blocking file.
+`e2e/csp.spec.ts` serves a real build under exactly the policy above and fails
+on any violation, so this is checked rather than claimed.
+
+**An embed is its own document, and inherits the policy.** A `<style>` block or
+a `<script>` inside one is blocked the same way it would be in any other page —
+see [Embeds](./embeds.md).
 
 If your deck has [embeds](./embeds.md) that reach outside their own directory,
 they need `frame-src` and whatever the embedded page itself uses. Nothing the

@@ -73,7 +73,7 @@ with no stylesheet.
 which is the last check before it goes anywhere.
 
 `--no-minify` leaves the runtime readable, for when you want to see what the
-6 kB actually is.
+6 kB actually is. `pnpm measure` breaks the same number down file by file.
 
 ## slide init
 

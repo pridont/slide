@@ -163,7 +163,53 @@ await mermaid.run()
   return { version, requests, raw, compressed }
 }
 
+/**
+ * What drawing the diagrams adds to a build, which is the fear this approach
+ * has to answer: that driving a headless browser would dominate it.
+ *
+ * The cache is cleared for the cold runs and left alone for the warm ones, so
+ * the difference is the drawing and nothing else. Best of three either way —
+ * a build this short is mostly noise otherwise.
+ */
+async function measureDiagrams() {
+  const project = join(ROOT, 'examples', 'project')
+  const cache = join(ROOT, 'node_modules', '.cache', 'slide')
+  const out = await mkdtemp(join(tmpdir(), 'slide-timing-'))
+
+  const run = async (clearCache) => {
+    const times = []
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (clearCache) await rm(cache, { recursive: true, force: true })
+      const started = process.hrtime.bigint()
+      execFileSync('node', [CLI, 'build', project, '--out', out], { cwd: ROOT, stdio: 'pipe' })
+      times.push(Number(process.hrtime.bigint() - started) / 1e6)
+    }
+    return Math.min(...times)
+  }
+
+  try {
+    // Cold first, so the warm run is measuring a cache the cold run filled.
+    const cold = await run(true)
+    const warm = await run(false)
+    return { cold, warm, drawing: cold - warm, count: await countFences(project) }
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+}
+
+/** How many ```mermaid fences the project actually draws. */
+async function countFences(project) {
+  let fences = 0
+  for (const file of await tree(project)) {
+    if (!file.endsWith('.md')) continue
+    const source = await readFile(join(project, file), 'utf8')
+    fences += (source.match(/^```mermaid\b/gm) ?? []).length
+  }
+  return fences
+}
+
 const kb = (bytes) => `${(bytes / 1024).toFixed(1)} kB`
+const ms = (value) => `${Math.round(value)} ms`
 const n = (bytes) => bytes.toLocaleString('en-US')
 
 const flags = new Set(process.argv.slice(2))
@@ -175,9 +221,10 @@ const decks = [
 ]
 
 const mermaid = flags.has('--mermaid') ? await measureMermaid() : null
+const diagrams = flags.has('--diagrams') ? await measureDiagrams() : null
 
 if (flags.has('--json')) {
-  console.log(JSON.stringify({ decks, mermaid }, null, 2))
+  console.log(JSON.stringify({ decks, mermaid, diagrams }, null, 2))
 } else {
   console.log('\nbrotli -q 11, first slide included\n')
   for (const deck of decks) {
@@ -195,6 +242,15 @@ if (flags.has('--json')) {
       `  mermaid ${mermaid.version}, one flowchart in a browser:\n` +
         `      ${mermaid.requests} requests, ${kb(mermaid.raw)} unpacked, ${kb(mermaid.compressed)} brotli\n` +
         '      slide draws it at build time and ships none of it.\n',
+    )
+  }
+  if (diagrams) {
+    console.log(
+      `  ${diagrams.count} diagrams, best of three:\n` +
+        `      ${ms(diagrams.cold).padStart(7)}  building them from nothing\n` +
+        `      ${ms(diagrams.warm).padStart(7)}  rebuilding with the cache, launching no browser\n` +
+        `      ${ms(diagrams.drawing).padStart(7)}  the drawing itself, ` +
+        `${ms(diagrams.drawing / diagrams.count)} a diagram\n`,
     )
   }
 }

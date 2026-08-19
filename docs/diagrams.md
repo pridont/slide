@@ -18,10 +18,16 @@ The diagram is drawn while the deck is built and inlined as SVG, so **nothing
 about mermaid reaches the browser** — no script to download, nothing to paint
 late, and the picture is there in the first frame like any other markup.
 
-Shipping mermaid instead would add roughly 400 kB over the wire to every slide
-carrying a diagram, against a whole-deck payload of about 6 kB. Prerendering
-would hide that for sequential navigation and not at all for a link straight at
-a diagram slide — which is the case a URL-addressable deck exists to serve.
+Shipping mermaid instead costs 27 requests and 189 kB over the wire — 805 kB
+unpacked — the first time a slide with a diagram is opened, against 6.0 kB for
+a whole deck without one. Prerendering would hide that for sequential
+navigation and not at all for a link straight at a diagram slide, which is the
+case a URL-addressable deck exists to serve.
+
+That figure is what a browser actually fetches to draw one flowchart, not the
+size of the package: mermaid loads its diagram types on demand, so the bundle
+on disk says very little. `pnpm measure --mermaid` renders the flowchart above
+in headless Chromium and counts the bytes.
 
 ## What it needs
 
@@ -69,16 +75,22 @@ and the mermaid version, under `node_modules/.cache/slide`. A rebuild that
 changed no diagram never launches anything; a deck with no diagrams never
 touches any of this.
 
+The example project is four decks, 26 slides and six diagrams. Building it,
+best of three runs:
+
 | | |
 | --- | --- |
-| First build, six diagrams | about 230 ms end to end |
-| Of which, launching the browser | about 57 ms |
-| Of which, loading mermaid | about 57 ms |
-| Each diagram after that | about 27 ms |
-| A rebuild with nothing changed | nothing — no browser is launched |
+| From nothing, drawing all six | about 600 ms |
+| Again, off the cache | about 225 ms — no browser is launched |
+| The drawing itself | about 375 ms, or 60 ms a diagram |
 
 The fear that stalls this approach is that driving a headless browser would
-dominate a build. Measured, it does not.
+dominate a build. Measured, it does not — and it is measurable: `pnpm measure
+--diagrams` is where those numbers come from. The very first build on a cold
+machine pays another half-second or so for the browser binary itself, once.
+
+What it buys is on the other side of the table: the 189 kB above, not
+downloaded, on every slide with a picture on it.
 
 ## Seeing one
 

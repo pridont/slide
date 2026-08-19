@@ -5,7 +5,10 @@ A markdown file in, a static slideshow out.
 Every slide is its own page with its own URL, moving between them is a real
 browser navigation, and the next slide is already prerendered when you get
 there. There is no client-side router, no framework, and nothing to boot: a
-built deck is HTML, one shared script and one shared stylesheet.
+built deck is HTML, one shared script and one shared stylesheet — three
+requests and 6.0 kB over the wire, first slide included, whatever the length
+of the deck. `pnpm measure` is where that number comes from, and CI fails if
+it stops being true.
 
 ```sh
 slide init talk.md      # a deck to start from
@@ -161,8 +164,10 @@ flowchart LR
 The diagram is drawn while the deck is built and inlined as SVG, so **nothing
 about mermaid reaches the browser** — no script to download, nothing to paint
 late, and the picture is there in the first frame like any other markup.
-Shipping mermaid instead would add roughly 400 kB over the wire to every slide
-carrying a diagram, against a whole-deck payload of about 6 kB.
+Shipping mermaid instead costs 27 requests and 189 kB over the wire (805 kB
+unpacked) the first time a slide with a diagram is opened, against 6.0 kB for
+a whole deck. `pnpm measure --mermaid` draws one flowchart in a real browser
+and counts what it fetched.
 
 Colours come from the deck's own tokens, so a diagram follows `theme:` the way
 everything else does — change `colorAccent` and the boxes change with it. The
@@ -180,8 +185,9 @@ than a diagram that quietly renders differently somewhere else.
 
 Every diagram is cached on disk by its source and the deck's resolved palette,
 under `node_modules/.cache/slide`. A rebuild that changed no diagram never
-launches anything; a first build of six diagrams costs about a third of a
-second in total.
+launches a browser at all: the six-diagram example project builds in 0.23 s
+off the cache, against 0.59 s when it has to draw them — and about a second
+the very first time, when the browser binary is still cold.
 
 Two things worth knowing:
 
@@ -210,9 +216,13 @@ theme:
 ```
 
 A mistyped token is an error with a did-you-mean, so it cannot quietly do
-nothing. There are 60 of them: `color-*` for the palette, `syn-*` for syntax
-highlighting, `font-*`, `fs-*` and `lh-*` for type, and `padding`, `gap`,
-`radius-*` and `transition-*` for the rest.
+nothing. There are 60 of them, in five groups: the raw palette (`ink-*`,
+`paper-*`, `apricot-*`, `lilac-*`, `cyan-*`), the semantic colours derived
+from it (`color-*`, `rule`, `rule-strong`), `syn-*` for syntax highlighting,
+type (`font-*`, `fs-*`, `lh-*`, `tracking-*`), and space and motion
+(`padding`, `gap`, `radius-*`, `transition-*`). `THEME_TOKENS` in
+`src/theme/tokens.ts` is the list, and a test diffs it against the stylesheet
+so the two cannot drift.
 
 Three accents come with the theme. A slide picks one with
 `class: theme-apricot | theme-lilac | theme-cyan`.
@@ -397,16 +407,22 @@ Content-Security-Policy:
   font-src    'self'
 ```
 
-There is nothing to hash and nothing to allow, because there is no inline
-script and no inline `style` attribute anywhere in a page: custom properties
-that would have been inline styles are generated into a stylesheet instead, and
-the one script that must run before the first render is an external
-parser-blocking file.
+The speculation rules are the one inline script, and `'inline-speculation-rules'`
+is what allows them. Dropping that keyword fails silently — prerendering stops
+with no console warning. The alternative is a `Speculation-Rules` response
+header, which needs server configuration a static host may not offer.
 
-`'inline-speculation-rules'` is the exception, and dropping it fails silently —
-prerendering stops with no console warning. The alternative is a
-`Speculation-Rules` response header, which needs server configuration a static
-host may not offer.
+Nothing else needs hashing or allowing: there is no other inline script and no
+inline `style` attribute anywhere in a page. Custom properties that would have
+been inline styles are generated into the stylesheet instead, and the script
+that must run before the first render is an external parser-blocking file.
+`e2e/csp.spec.ts` serves a real build under exactly the policy above and fails
+on any violation.
+
+**An embed is its own document, and inherits the policy.** A `<style>` block or
+a `<script>` inside one is blocked the same way it would be in any other page,
+so keep an embed's CSS and JS in files beside it — which is what a directory
+embed is for.
 
 ## Browser support
 
@@ -420,11 +436,17 @@ deck depends on either.
 pnpm install
 pnpm check         # lint, typecheck, unit tests
 pnpm test:e2e      # Playwright, against a real build
+pnpm measure       # the payload figures quoted above
 pnpm example:dev   # the example deck, in the dev server
 pnpm example:project
 pnpm docs:serve    # the documentation site, at localhost:4180
 pnpm docs:site     # the same, with both demo decks built into it
 ```
+
+`pnpm measure` also takes `--check` (the budget CI enforces), `--mermaid` (what
+shipping mermaid would cost, drawn in a real browser) and `--diagrams` (what
+drawing them at build time costs instead). Every number in this file and in
+`docs/` comes out of it.
 
 `src/parse` splits and validates, `src/render` turns a slide into a page,
 `src/build` emits the site, `src/dev` serves the same renderer from memory,

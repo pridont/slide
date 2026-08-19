@@ -51,6 +51,25 @@ navigated to. Slides are prerendered, and a demo that starts running two slides
 early — playing audio, hitting the network, burning battery — is not a demo you
 want prerendered.
 
+## Embeds and a Content-Security-Policy
+
+An embed is its own document, and it is served from your host like every other
+file, so it inherits whatever policy that host sets. Under the strict one
+[Deploying](./deploying.md#content-security-policy) suggests, a `<style>` block
+or a `<script>` written inline in an embed is blocked — the slide around it
+still renders, and the embed comes up unstyled and inert.
+
+Nothing the build emits has this problem; an embed is your HTML, not the
+tool's. Keeping its CSS and JS in files beside it is what a directory embed is
+for, and it is how `examples/embeds/easing/` is written:
+
+```
+easing/
+  index.html      <link rel=stylesheet href=./style.css>, <script src=./main.js>
+  style.css
+  main.js
+```
+
 ## A directory embed
 
 ```
