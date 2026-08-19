@@ -28,6 +28,9 @@ jobs:
       # The example is the deck everything is verified against, so a build of
       # it failing is a failure worth hearing about on its own.
       - run: pnpm example:build
+      # Every payload figure in the README comes from this script. The budgets
+      # are what stops one of them quietly becoming untrue.
+      - run: pnpm measure --check
       # The documentation site is built from docs/*.md by a script of its own,
       # and it can break on a missing title or a link to a page that is gone.
       # Cheaper to find out here than on a deploy.
