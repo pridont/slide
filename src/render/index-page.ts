@@ -1,5 +1,5 @@
 import { escapeHtml } from './html.js'
-import type { PageAssets } from './page.js'
+import { assetTags, type PageAssets } from './page.js'
 
 export interface IndexEntry {
   readonly href: string
@@ -29,19 +29,13 @@ export function renderIndexPage(input: IndexPageInput): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<title>${escapeHtml(input.title)}</title>`,
     `<meta name="color-scheme" content="${input.colorScheme === 'light' ? 'light' : 'dark'}">`,
-    // The index transitions into decks, so it needs the same early listeners.
-    `<script src="${escapeHtml(input.assets.head)}"></script>`,
   ]
 
   if (input.description) {
     head.push(`<meta name="description" content="${escapeHtml(input.description)}">`)
   }
-  for (const href of input.assets.styles) {
-    head.push(`<link rel="stylesheet" href="${escapeHtml(href)}">`)
-  }
-  for (const src of input.assets.modules) {
-    head.push(`<script type="module" src="${escapeHtml(src)}"></script>`)
-  }
+  // The index transitions into decks, so it needs the same early listeners.
+  head.push(...assetTags(input.assets))
 
   const htmlAttributes = [`lang="${escapeHtml(input.lang ?? 'en')}"`]
   if (input.colorScheme === 'light') htmlAttributes.push('class="light"')

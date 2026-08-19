@@ -1,6 +1,6 @@
 import type { Deck } from '../parse/types.js'
 import { escapeHtml } from './html.js'
-import type { PageAssets } from './page.js'
+import { assetTags, type PageAssets } from './page.js'
 
 /**
  * The presenter's own window: the current slide, the next one, the notes, and
@@ -37,9 +37,7 @@ export function renderPresenterPage(input: PresenterPageInput): string {
     `<title>Presenter · ${escapeHtml(title)}</title>`,
     `<meta name="color-scheme" content="${deck.meta.colorScheme === 'light' ? 'light' : 'dark'}">`,
     '<meta name="robots" content="noindex">',
-    `<script src="${escapeHtml(input.assets.head)}"></script>`,
-    ...input.assets.styles.map((url) => `<link rel="stylesheet" href="${escapeHtml(url)}">`),
-    ...input.assets.modules.map((url) => `<script type="module" src="${escapeHtml(url)}"></script>`),
+    ...assetTags(input.assets),
   ]
 
   const htmlAttributes = [`lang="${escapeHtml(input.lang ?? 'en')}"`]

@@ -116,7 +116,7 @@ describe('an embed that will not do', () => {
         slide: deck.slides[1]!,
         resolveAsset: (ref) => ref,
         href: () => '/',
-        assets: { styles: [], modules: [], head: '/head.js' },
+        assets: { styles: [], scripts: [] },
       }),
     ).toThrow(/deck\.md:7 unknown embed key "bogus"/)
   })

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Easing comparison</title>
+    <!--
+      A directory embed rather than a single file, because an embed is its own
+      document and inherits whatever Content-Security-Policy the deck is served
+      under. A strict one blocks inline <style> and inline <script>, so both
+      live beside this file — which is what a directory embed is for.
+    -->
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="row">
+      <span class="name">linear</span>
+      <div class="track"><div class="ball a" id="one"></div></div>
+    </div>
+    <div class="row">
+      <span class="name">ease-out</span>
+      <div class="track"><div class="ball b" id="two"></div></div>
+    </div>
+    <button id="play">play</button>
+
+    <script src="./main.js"></script>
+  </body>
+</html>

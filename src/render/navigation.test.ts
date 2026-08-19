@@ -15,7 +15,7 @@ function page(source: string, index: number, present = true): string {
     resolveAsset: (ref) => `/assets/${ref.replace('./', '')}`,
     resolveAssetIfPresent: (ref) => (present ? `/assets/${ref.replace('./', '')}` : null),
     href: (n) => (n === 1 ? '/' : `/${n}/`),
-    assets: { styles: [], modules: [], head: '/head.js' },
+    assets: { styles: [], scripts: [] },
   })
 }
 
@@ -66,7 +66,7 @@ describe('image warming', () => {
       slide: deck.slides[0]!,
       resolveAsset: (ref) => ref,
       href: (n) => `/${n}/`,
-      assets: { styles: [], modules: [], head: '/head.js' },
+      assets: { styles: [], scripts: [] },
     })
     expect(html).not.toContain('rel="prefetch"')
   })
@@ -92,25 +92,33 @@ describe('firstImageRef', () => {
 
 describe('the transition head script', () => {
   it('is linked as a parser-blocking classic script', () => {
-    const html = page(DECK, 1)
-    // Not `type=module`, not `defer`, not `async` — any of those would let the
-    // first render happen before the listeners exist. Not inline either, so a
-    // strict `script-src` does not block it.
-    expect(html).toContain('<script src="/head.js"></script>')
-  })
-
-  it('comes before the runtime module in the document', () => {
     const deck = parseDeck(DECK, FILE)
     const html = renderSlidePage({
       deck,
       slide: deck.slides[1]!,
       resolveAsset: (ref) => ref,
       href: (n) => `/${n}/`,
-      assets: { styles: [], modules: ['/runtime.js'], head: '/head.js' },
+      assets: { styles: [], scripts: [{ src: '/runtime.js' }] },
     })
 
-    expect(html.indexOf('src="/head.js"')).toBeGreaterThan(-1)
-    expect(html.indexOf('src="/head.js"')).toBeLessThan(html.indexOf('type="module"'))
+    // Not `type=module`, not `defer`, not `async` — any of those would let the
+    // first render happen before the listeners exist. Not inline either, so a
+    // strict `script-src` does not block it.
+    expect(html).toContain('<script src="/runtime.js"></script>')
+  })
+
+  it('comes after the stylesheet, so blocking the parser does not delay the paint', () => {
+    const deck = parseDeck(DECK, FILE)
+    const html = renderSlidePage({
+      deck,
+      slide: deck.slides[1]!,
+      resolveAsset: (ref) => ref,
+      href: (n) => `/${n}/`,
+      assets: { styles: ['/base.css'], scripts: [{ src: '/runtime.js' }] },
+    })
+
+    expect(html.indexOf('href="/base.css"')).toBeGreaterThan(-1)
+    expect(html.indexOf('href="/base.css"')).toBeLessThan(html.indexOf('src="/runtime.js"'))
   })
 
   it('holds the promises the outgoing document exposes', async () => {

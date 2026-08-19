@@ -12,6 +12,7 @@ import { SlideParseError } from '../parse/errors.js'
 import { isConfigFile } from '../project/config.js'
 import { loadProject, type Project, type ProjectDeck } from '../project/index.js'
 import { createMarkdown, renderPresenter, renderSlidePage } from '../render/index.js'
+import type { PageAssets } from '../render/page.js'
 import { renderIndexPage } from '../render/index-page.js'
 import { createDevAssetResolver } from './assets.js'
 import { renderErrorPage, renderMissingSlidePage } from './error-page.js'
@@ -236,7 +237,7 @@ export async function dev(options: DevOptions): Promise<ViteDevServer> {
                 return
               }
 
-              const assets = {
+              const assets: PageAssets = {
                 // The theme is linked *and* imported by the runtime: the link
                 // is what paints the first frame, the import is what
                 // hot-reloads it while an author edits.
@@ -245,8 +246,16 @@ export async function dev(options: DevOptions): Promise<ViteDevServer> {
                   `${base}${GENERATED_PREFIX}decks.css`,
                   ...active.styles.map((path) => createDevAssetResolver(path, root, base).resolve(path)),
                 ],
-                modules: [`${base}@fs${runtimeEntry}`, overflowUrl(base)],
-                head: `${base}${GENERATED_PREFIX}head.js`,
+                // A build concatenates these into one parser-blocking file.
+                // Dev cannot: Vite serves the runtime through its module graph,
+                // which is what hot-reloads the theme. So the head hooks stay
+                // the separate classic script they have to be, and the overflow
+                // check — which a build has no use for — comes along as a third.
+                scripts: [
+                  { src: `${base}${GENERATED_PREFIX}head.js` },
+                  { src: `${base}@fs${runtimeEntry}`, module: true },
+                  { src: overflowUrl(base), module: true },
+                ],
               }
 
               if (route.kind === 'index') {
@@ -323,12 +332,7 @@ export async function dev(options: DevOptions): Promise<ViteDevServer> {
   return server
 }
 
-function renderProjectIndex(
-  project: Project,
-  root: string,
-  base: string,
-  assets: { styles: string[]; modules: string[]; head: string },
-): string {
+function renderProjectIndex(project: Project, root: string, base: string, assets: PageAssets): string {
   const resolveIfPresent = (ref: string, from: string): string | null =>
     createDevAssetResolver(from, root, base).resolveIfPresent(ref)
 

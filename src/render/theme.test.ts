@@ -16,7 +16,7 @@ function page(source: string): string {
     slide: deck.slides[0]!,
     resolveAsset: (ref) => ref,
     href: () => '/',
-    assets: { styles: [], modules: [], head: '/head.js' },
+    assets: { styles: [], scripts: [] },
   })
 }
 

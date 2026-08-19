@@ -83,7 +83,7 @@ describe('the example deck', () => {
         deckId: 'deck',
         resolveAsset: (ref) => ref,
         href: (index) => `/${index}/`,
-        assets: { styles: [], modules: [], head: '/head.js' },
+        assets: { styles: [], scripts: [] },
       })
       // The one invariant every page has, whatever the slide contains.
       expect(html).toContain(`data-slide="${slide.index}"`)

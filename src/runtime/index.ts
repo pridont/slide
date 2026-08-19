@@ -3,8 +3,12 @@
  *
  * Navigation is a real document navigation (`location.href`) on purpose: only
  * those fire cross-document view transitions, and the prerendered next page
- * only pays off if we navigate to it. Anything that cannot wait for the module
- * graph lives in the head script instead.
+ * only pays off if we navigate to it.
+ *
+ * A build concatenates this after the head script (src/client/head.ts) and
+ * serves the pair as one parser-blocking classic script, so nothing here can
+ * assume `<body>` has been parsed — see `onReady`. Dev serves this as a module
+ * instead, where it runs deferred and the body is already there.
  */
 import '../theme/base.css'
 import { openChannel } from './channel.js'
@@ -178,20 +182,36 @@ function whenActive(run: () => void): void {
   }
 }
 
+/**
+ * Everything below reads `document.body`, and in a build this script is
+ * parser-blocking — it runs while the body is still a promise. Dev serves it
+ * as a deferred module, where the document is already complete and this runs
+ * straight through.
+ */
+function onReady(run: () => void): void {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true })
+  } else {
+    run()
+  }
+}
+
 // Transition direction and the skipped-transition guard are in the head
 // script, which is listening before the first render.
-const preview = new URLSearchParams(location.search).get('preview')
+onReady(() => {
+  const preview = new URLSearchParams(location.search).get('preview')
 
-if (document.body.dataset.role === 'presenter') {
-  // The presenter window drives; it never navigates, so none of the slide
-  // behaviour above applies to it.
-  whenActive(startPresenter)
-} else if (preview === null) {
-  whenActive(activate)
-} else if (preview !== 'next') {
-  // A slide inside the presenter's own window: no keys, no channel, nothing
-  // announced. Its embeds do start, though — the presenter is looking at the
-  // slide it is on, and an empty frame is not what the room will see. The
-  // next-slide thumbnail is the one case that stays still.
-  whenActive(startEmbeds)
-}
+  if (document.body.dataset.role === 'presenter') {
+    // The presenter window drives; it never navigates, so none of the slide
+    // behaviour above applies to it.
+    whenActive(startPresenter)
+  } else if (preview === null) {
+    whenActive(activate)
+  } else if (preview !== 'next') {
+    // A slide inside the presenter's own window: no keys, no channel, nothing
+    // announced. Its embeds do start, though — the presenter is looking at the
+    // slide it is on, and an empty frame is not what the room will see. The
+    // next-slide thumbnail is the one case that stays still.
+    whenActive(startEmbeds)
+  }
+})

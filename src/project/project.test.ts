@@ -145,7 +145,7 @@ describe('layout templates', () => {
 })
 
 describe('a project stylesheet', () => {
-  it('is linked after the theme, hashed like any asset', async () => {
+  it('is concatenated after the theme, into the one stylesheet a page links', async () => {
     const dir = await workspace({
       'slide.config.json': JSON.stringify({ css: './theme.css' }),
       'slides/one.md': '# One\n',
@@ -156,10 +156,24 @@ describe('a project stylesheet', () => {
     await build({ entry: dir, outDir: out })
     const html = await readFile(join(out, 'one', 'index.html'), 'utf8')
 
-    const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((match) => match[1])
-    expect(links.at(-1)).toMatch(/^\/assets\/theme-[\w-]+\.css$/)
-    // Last, so a project can override the theme it loads after.
-    expect(links).toHaveLength(2)
+    const links = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((match) => match[1]!)
+    expect(links).toHaveLength(1)
+
+    // Last in the file, so a project can override the theme it follows.
+    const css = await readFile(join(out, links[0]!.slice(1)), 'utf8')
+    expect(css).toContain('.card { color: red }')
+    expect(css.indexOf('--slide-ink-bg')).toBeLessThan(css.indexOf('.card { color: red }'))
+  }, 30_000)
+
+  it('refuses an @import, which concatenating would silently drop', async () => {
+    const dir = await workspace({
+      'slide.config.json': JSON.stringify({ css: './theme.css' }),
+      'slides/one.md': '# One\n',
+      'theme.css': '@import "./more.css";\n.card { color: red }',
+      'more.css': '.card { font-weight: 700 }',
+    })
+
+    await expect(build({ entry: dir, outDir: join(dir, 'out') })).rejects.toThrow(/uses @import/)
   }, 30_000)
 
   it('says so when the file is not there', async () => {
@@ -262,15 +276,17 @@ describe('a project build', () => {
 
     const { report } = await build({ entry: dir, outDir: out })
 
-    expect(report.scripts).toHaveLength(1)
     expect(report.styles).toHaveLength(1)
 
     const [a, b] = await Promise.all([
       readFile(join(out, 'one/index.html'), 'utf8'),
       readFile(join(out, 'two/index.html'), 'utf8'),
     ])
-    expect(a).toContain(report.scripts[0]!)
-    expect(b).toContain(report.scripts[0]!)
+    // Every deck in the project asks for the same files.
+    for (const url of [...report.scripts, ...report.styles]) {
+      expect(a).toContain(url)
+      expect(b).toContain(url)
+    }
   }, 30_000)
 
   it('keeps navigation inside its own deck', async () => {

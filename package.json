@@ -32,6 +32,7 @@
     "example:project": "pnpm build && node dist/cli/index.js dev examples/project --open",
     "example:project:build": "pnpm build && node dist/cli/index.js build examples/project --out examples/project-dist",
     "example:build": "pnpm build && node dist/cli/index.js build examples/basic.md --out examples/dist",
+    "measure": "pnpm build && node scripts/measure.mjs",
     "docs": "node scripts/build-docs.mjs",
     "docs:serve": "node scripts/build-docs.mjs --serve",
     "docs:site": "pnpm build && pnpm run docs && node dist/cli/index.js build examples/basic.md --out docs-dist/demo --base /demo/ && node dist/cli/index.js build examples/project --out docs-dist/talks --base /talks/",

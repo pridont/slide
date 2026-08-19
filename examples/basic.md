@@ -202,7 +202,7 @@ content. Four dashes or more is a thematic break, never a break in the deck.
 
 ## Embeds are iframes with manners
 
-::: iframe {src=./embeds/easing.html height=230 title="Easing comparison"}
+::: iframe {src=./embeds/easing/ height=230 title="Easing comparison"}
 `::: iframe {src=… }` frames a file or a whole directory.
 :::
 

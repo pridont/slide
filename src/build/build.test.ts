@@ -21,6 +21,15 @@ const PNG = Buffer.from(
   'base64',
 )
 
+/** What a page asks the browser for, which is what every claim is about. */
+function links(html: string): { scripts: string[]; styles: string[] } {
+  const grab = (pattern: RegExp): string[] => [...html.matchAll(pattern)].map((match) => match[1]!)
+  return {
+    scripts: grab(/<script[^>]*\bsrc="([^"]+)"/g),
+    styles: grab(/<link rel="stylesheet" href="([^"]+)"/g),
+  }
+}
+
 async function tree(dir: string): Promise<string[]> {
   const out: string[] = []
   for (const entry of await readdir(dir, { withFileTypes: true, recursive: true })) {
@@ -136,27 +145,53 @@ describe('build', () => {
       'presenter/index.html',
     ])
 
-    // The shared-chunk requirement: one runtime, one stylesheet, for all pages.
-    expect(report.scripts).toHaveLength(1)
-    expect(report.styles).toHaveLength(1)
-    // The head script is a separate generated file, not a second chunk.
-    expect(files.filter((file) => file.endsWith('.js') && !file.includes('head-'))).toHaveLength(1)
-    expect(files.filter((file) => file.endsWith('.css'))).toHaveLength(1)
-
     const first = await readFile(join(out, 'index.html'), 'utf8')
     const second = await readFile(join(out, '2/index.html'), 'utf8')
-    expect(first).toContain(report.scripts[0]!)
-    expect(second).toContain(report.scripts[0]!)
-    expect(first).toContain(report.styles[0]!)
+
+    // The shared-chunk requirement, measured on what a page actually links
+    // rather than on what Vite happened to bundle.
+    expect(links(first).styles).toHaveLength(1)
+    expect(links(first).scripts).toEqual(links(second).scripts)
+    expect(links(first).styles).toEqual(links(second).styles)
+    expect(report.scripts).toEqual(links(first).scripts)
+    expect(report.styles).toEqual(links(first).styles)
+    expect(files.filter((file) => file.endsWith('.css'))).toHaveLength(1)
   }, 30_000)
 
-  it('names the runtime chunk and its stylesheet consistently', async () => {
+  /**
+   * The claim in the README, on the deck most likely to break it: a background
+   * and an aspect ratio generate CSS, and a `theme:` generates more.
+   */
+  it('links one stylesheet however much CSS a deck generates', async () => {
+    const dir = await workspace({
+      'talk.md':
+        '---\naspectRatio: "4:3"\nbackground: ./photo.png\ntheme:\n  colorAccent: "#ff8800"\n---\n\n# One\n',
+      'photo.png': PNG,
+    })
+    const out = join(dir, 'out')
+
+    const { report } = await build({ entry: join(dir, 'talk.md'), outDir: out })
+    const files = await tree(out)
+    const html = await readFile(join(out, 'index.html'), 'utf8')
+
+    expect(files.filter((file) => file.endsWith('.css'))).toHaveLength(1)
+    expect(links(html).styles).toHaveLength(1)
+
+    // Everything generated is in that one file, in cascade order.
+    const css = await readFile(join(out, report.styles[0]!.slice(1)), 'utf8')
+    expect(css).toContain('--slide-ink-bg')
+    expect(css).toContain('--slide-aspect:4/3')
+    expect(css).toContain('--slide-color-accent')
+    expect(css.indexOf('--slide-ink-bg')).toBeLessThan(css.indexOf('--slide-aspect:4/3'))
+  }, 30_000)
+
+  it('names the runtime and its stylesheet consistently', async () => {
     const dir = await workspace({ 'talk.md': '# One\n' })
     const out = join(dir, 'out')
 
     const { report } = await build({ entry: join(dir, 'talk.md'), outDir: out })
 
-    expect(report.scripts[0]).toMatch(/^\/assets\/runtime-[\w-]+\.js$/)
+    expect(report.scripts).toContainEqual(expect.stringMatching(/^\/assets\/runtime-[\w-]+\.js$/))
     expect(report.styles[0]).toMatch(/^\/assets\/runtime-[\w-]+\.css$/)
   }, 30_000)
 
